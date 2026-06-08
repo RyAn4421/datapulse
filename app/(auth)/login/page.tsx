@@ -70,16 +70,97 @@ function LoginForm() {
     };
 
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="relative w-full max-w-md"
-        >
-            <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_20%,rgba(99,102,241,0.25),transparent_60%)] blur-2xl" />
-            <div className="relative bg-void-800 border border-void-500/50 rounded-xl p-6 shadow-2xl overflow-hidden">
-                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        <div className="flex w-full max-w-[900px] min-h-[550px] bg-void-900 border border-void-800 shadow-2xl rounded-2xl overflow-hidden relative">
+            {/* Left Panel */}
+            <div className="hidden md:flex flex-col relative w-1/2 p-10 justify-center overflow-hidden bg-void-950">
+                {/* Animated wave background */}
+                <svg
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 1, opacity: 0.35 }}
+                  viewBox="0 0 360 700"
+                  preserveAspectRatio="xMidYMid slice"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <defs>
+                    <linearGradient id="waveGrad1" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#6366F1" stopOpacity="0.5"/>
+                      <stop offset="100%" stopColor="#22D3EE" stopOpacity="0.2"/>
+                    </linearGradient>
+                    <linearGradient id="waveGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#8B5CF6" stopOpacity="0.35"/>
+                      <stop offset="100%" stopColor="#6366F1" stopOpacity="0.1"/>
+                    </linearGradient>
+                  </defs>
+                  {/* Wave 1 */}
+                  <path d="M0 200 Q90 160 180 200 T360 200 V700 H0Z" fill="url(#waveGrad1)">
+                    <animateTransform attributeName="transform" type="translate"
+                      values="0,0;-180,0;0,0" dur="8s" repeatCount="indefinite"/>
+                  </path>
+                  {/* Wave 2 */}
+                  <path d="M0 240 Q90 200 180 240 T360 240 V700 H0Z" fill="url(#waveGrad2)">
+                    <animateTransform attributeName="transform" type="translate"
+                      values="0,0;180,0;0,0" dur="6s" repeatCount="indefinite"/>
+                  </path>
+                  {/* Wave 3 subtle */}
+                  <path d="M0 280 Q90 250 180 280 T360 280 V700 H0Z" fill="rgba(99,102,241,0.08)">
+                    <animateTransform attributeName="transform" type="translate"
+                      values="0,0;-90,0;0,0" dur="10s" repeatCount="indefinite"/>
+                  </path>
+                </svg>
+
+                <div className="relative z-10 flex flex-col items-center text-center">
+                    <svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg"
+                      style={{ filter: 'drop-shadow(0 0 20px rgba(99,102,241,0.6))', marginBottom: 20, position: 'relative', zIndex: 3 }}
+                    >
+                      <rect width="72" height="72" rx="18" fill="#1a1040"/>
+                      <defs>
+                        <linearGradient id="logoGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#a78bfa"/>
+                          <stop offset="50%" stopColor="#6366F1"/>
+                          <stop offset="100%" stopColor="#22D3EE"/>
+                        </linearGradient>
+                      </defs>
+                      <path d="M12 50 L20 26 L30 44 L36 32 L42 44 L52 26 L60 50"
+                        fill="none" stroke="url(#logoGrad1)" strokeWidth="5"
+                        strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <div style={{
+                      fontFamily: "'Space Grotesk', sans-serif",
+                      fontSize: 22, fontWeight: 700,
+                      color: '#F1F5F9',
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase',
+                      marginBottom: 12,
+                      position: 'relative', zIndex: 3,
+                    }}>
+                        DataPulse
+                    </div>
+                    <p className="text-sm text-ink-300 max-w-[200px] relative z-[3]">
+                        Your SaaS analytics, simplified and automated.
+                    </p>
+                </div>
+            </div>
+
+            {/* Right Panel */}
+            <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="w-full md:w-1/2 p-8 md:p-10 relative bg-void-800"
+            >
                 <div className="mb-6">
-                    <h1 className="text-2xl font-serif font-semibold text-ink-100">Sign in</h1>
+                    <h1 style={{
+                      fontFamily: "'Space Grotesk', sans-serif",
+                      fontSize: 30,
+                      fontWeight: 700,
+                      background: 'linear-gradient(135deg, #ffffff 0%, #c7c8ff 50%, #a5b4fc 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                      marginBottom: 8,
+                      letterSpacing: '-0.02em',
+                      lineHeight: 1.2,
+                    }}>
+                      Sign in to your account
+                    </h1>
                     <p className="text-sm text-ink-300 mt-1">Open your DataPulse workspace</p>
                 </div>
 
@@ -115,11 +196,28 @@ function LoginForm() {
                     {searchParams.get('registered') && <p className="text-sm text-emerald-500">Registration complete. Sign in to continue.</p>}
 
                     <motion.button
-                        whileTap={{ scale: 0.97 }}
-                        disabled={isSubmitting}
-                        className="w-full h-11 rounded-lg bg-iris-500 hover:bg-iris-600 disabled:opacity-60 text-white text-sm font-medium transition-colors shadow-lg shadow-iris-500/10"
+                      whileTap={{ scale: 0.97 }}
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="btn-wave-anim"
+                      style={{
+                        width: '100%',
+                        padding: '13px',
+                        marginTop: 16,
+                        background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+                        border: 'none',
+                        borderRadius: 12,
+                        color: '#fff',
+                        fontSize: 14,
+                        fontWeight: 700,
+                        letterSpacing: '0.02em',
+                        fontFamily: "'Space Grotesk', sans-serif",
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 24px rgba(99,102,241,0.45)',
+                        opacity: isSubmitting ? 0.7 : 1,
+                      }}
                     >
-                        {isSubmitting ? 'Signing in...' : 'Sign in'}
+                      <span>{isSubmitting ? 'Signing in...' : 'Sign in to DataPulse'}</span>
                     </motion.button>
                 </form>
 
@@ -153,8 +251,8 @@ function LoginForm() {
                 <p className="mt-6 text-center text-sm text-ink-350">
                     New to DataPulse? <Link href="/register" className="text-iris-400 hover:text-iris-300 font-medium ml-1">Create an account</Link>
                 </p>
-            </div>
-        </motion.div>
+            </motion.div>
+        </div>
     );
 }
 
