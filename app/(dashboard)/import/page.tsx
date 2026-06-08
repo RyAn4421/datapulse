@@ -22,29 +22,57 @@ export default function ImportPage() {
     const setActiveDatasetId = useStore((state) => state.setActiveDatasetId);
     const [parsed, setParsed] = useState<ParsedUpload | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [saveProgress, setSaveProgress] = useState(0);
 
-    const saveDataset = async () => {
+    const handleSave = async () => {
         if (!parsed) return;
         setIsSaving(true);
 
         try {
-            const response = await fetch('/api/datasets', {
+            const BATCH_SIZE = 500;
+            const firstBatch = parsed.rows.slice(0, BATCH_SIZE);
+
+            const res = await fetch('/api/datasets', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(parsed),
+                body: JSON.stringify({
+                    name: parsed.name,
+                    source: parsed.source,
+                    headers: parsed.headers,
+                    rows: firstBatch,
+                    rowCount: parsed.rows.length,
+                }),
             });
 
-            if (!response.ok) throw new Error('Failed to save');
+            if (!res.ok) throw new Error('Failed to save dataset');
+            const dataset = await res.json();
 
-            const dataset = await response.json();
+            // Step 2 — send remaining rows in batches
+            const remainingRows = parsed.rows.slice(BATCH_SIZE);
+            const batches = [];
+            for (let i = 0; i < remainingRows.length; i += BATCH_SIZE) {
+                batches.push(remainingRows.slice(i, i + BATCH_SIZE));
+            }
+
+            for (let i = 0; i < batches.length; i++) {
+                await fetch(`/api/datasets/${dataset._id}/rows`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rows: batches[i] }),
+                });
+                const pct = Math.round(((i + 1) / batches.length) * 100);
+                setSaveProgress(pct);
+            }
+
             setActiveDatasetId(dataset._id);
             await mutate();
             toast.success('Dataset saved!');
             router.push('/dashboard');
         } catch (error) {
-            toast.error('Failed to save');
+            toast.error('Failed to save dataset');
         } finally {
             setIsSaving(false);
+            setSaveProgress(0);
         }
     };
 
@@ -77,11 +105,16 @@ export default function ImportPage() {
                                 </div>
                                 <motion.button
                                     whileTap={{ scale: 0.97 }}
-                                    onClick={saveDataset}
+                                    onClick={handleSave}
                                     disabled={isSaving}
-                                    className="h-9 px-4 rounded-lg bg-accent hover:bg-accent-hover disabled:opacity-60 text-white text-sm font-medium"
+                                    className="bg-accent hover:bg-accent-hover text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-60 flex items-center gap-2"
                                 >
-                                    {isSaving ? 'Saving...' : 'Save Dataset'}
+                                    {isSaving ? (
+                                        <>
+                                            <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            {saveProgress > 0 ? `Saving... ${saveProgress}%` : 'Saving...'}
+                                        </>
+                                    ) : 'Save Dataset'}
                                 </motion.button>
                             </div>
 

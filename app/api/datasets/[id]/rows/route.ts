@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { connectDB } from '@/lib/mongodb';
@@ -64,4 +64,26 @@ export async function GET(request: Request, { params }: { params: { id: string }
     console.error('Failed to fetch dataset rows:', error);
     return NextResponse.json({ error: 'Failed to fetch rows' }, { status: 500 });
   }
+}
+
+export async function POST(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const session = await getServerSession(authOptions)
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  await connectDB()
+  const { rows } = await req.json()
+  const userId = (session.user as any)?.id ?? session.user?.email
+
+  const dataset = await Dataset.findOne({ _id: params.id, userId })
+  if (!dataset) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  // Append rows to existing dataset
+  dataset.rows.push(...rows)
+  dataset.rowCount = dataset.rows.length
+  await dataset.save()
+
+  return NextResponse.json({ success: true, rowCount: dataset.rowCount })
 }
