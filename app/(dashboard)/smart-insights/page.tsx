@@ -6,6 +6,7 @@ import {
   ChevronDown, ChevronUp, BarChart2, Zap
 } from 'lucide-react'
 import { useDashboardStore } from '@/lib/store'
+import posthog from 'posthog-js'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -23,6 +24,7 @@ interface Insight {
   priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
   // Sprint 1B additions
   confidence?: 'High' | 'Medium' | 'Low'
+  basedOn?: string
   evidence?: string[]
   metrics?: InsightMetrics
 }
@@ -273,14 +275,20 @@ export default function SmartInsightsPage() {
                         </div>
                       )}
 
-                      {/* Why? toggle — Sprint 1B */}
+                      {/* Why? toggle — Sprint 1B & 2 */}
                       {hasEvidence && (
                         <button
-                          onClick={() => toggleExpand(insight.number)}
+                          onClick={() => {
+                            toggleExpand(insight.number);
+                            posthog.capture('why_button_clicked', { insight_number: insight.number });
+                            if (!isExpanded) {
+                              posthog.capture('evidence_expanded', { insight_number: insight.number });
+                            }
+                          }}
                           className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text transition-colors"
                         >
                           {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                          {isExpanded ? 'Hide evidence' : 'Why this insight?'}
+                          {isExpanded ? 'Hide evidence' : 'Why?'}
                         </button>
                       )}
 
@@ -314,6 +322,15 @@ export default function SmartInsightsPage() {
                                 <p className="text-xs text-text-muted">
                                   Insufficient evidence available for this insight.
                                 </p>
+                              )}
+
+                              {/* Explanation of confidence */}
+                              {insight.basedOn && (
+                                <div className="border-t border-border/40 pt-3">
+                                  <p className="text-xs text-text-muted leading-relaxed">
+                                    <span className="font-semibold text-text">Confidence:</span> {insight.confidence}. <span className="font-semibold text-text">Based on:</span> {insight.basedOn}
+                                  </p>
+                                </div>
                               )}
 
                               {/* Metrics block */}

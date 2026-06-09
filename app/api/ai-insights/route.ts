@@ -45,6 +45,7 @@ Return ONLY a valid JSON array with exactly this structure — no markdown, no e
     "action": "One concrete action the user should take based on this finding.",
     "priority": "CRITICAL",
     "confidence": "High",
+    "basedOn": "All projects in Marketing category, full date range.",
     "evidence": [
       "Specific data point 1 (e.g. '12 projects in Marketing')",
       "Specific data point 2 (e.g. 'Average spend: ₹135,000')"
@@ -64,6 +65,7 @@ Rules:
   - High   = strong evidence, multiple data points visible in the sample
   - Medium = partial evidence, moderate data points
   - Low    = limited data, directional only
+- basedOn must be a short explanation of why this confidence level was assigned (max 15 words). E.g. 'All projects in Marketing category, full date range.'
 - evidence must be an array of 2–4 short, specific strings referencing actual values from the data
 - metrics.value is the key number for this insight (use 0 if not applicable)
 - metrics.average is the mean of the relevant column (use 0 if not applicable)
@@ -126,8 +128,9 @@ Rules:
       finding:    ins.finding    ?? '',
       action:     ins.action     ?? '',
       priority:   ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].includes(ins.priority) ? ins.priority : 'MEDIUM',
-      // Sprint 1B additions
+      // Sprint 1B & Sprint 2 additions
       confidence: ['High', 'Medium', 'Low'].includes(ins.confidence) ? ins.confidence : 'Medium',
+      basedOn:    ins.basedOn    ?? '',
       evidence:   Array.isArray(ins.evidence) ? ins.evidence : [],
       metrics: {
         value:   typeof ins.metrics?.value   === 'number' ? ins.metrics.value   : 0,

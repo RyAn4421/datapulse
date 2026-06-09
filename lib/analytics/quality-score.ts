@@ -16,7 +16,7 @@ export function calculateQualityScore(
   if (!rows || rows.length === 0 || !headers || headers.length === 0) {
     return {
       score: 0,
-      grade: 'F',
+      grade: 'Needs Attention',
       breakdown: { completeness: 0, duplicate: 0, consistency: 0, formatting: 0 },
     };
   }
@@ -25,11 +25,17 @@ export function calculateQualityScore(
   const totalCells = totalRows * headers.length;
 
   // 1. Completeness (40%)
+  // Empty cell = null, blank string, or "N/A" literal
   let emptyCells = 0;
   for (const row of rows) {
     for (const header of headers) {
       const val = row[header];
-      if (val === null || val === undefined || String(val).trim() === '') {
+      if (
+        val === null ||
+        val === undefined ||
+        String(val).trim() === '' ||
+        String(val).trim().toUpperCase() === 'N/A'
+      ) {
         emptyCells++;
       }
     }
@@ -37,64 +43,92 @@ export function calculateQualityScore(
   const completenessScore = Math.max(0, ((totalCells - emptyCells) / totalCells) * 100);
 
   // 2. Duplicate (30%)
+  // Duplicate row = all column values identical to another row
   const uniqueRows = new Set(rows.map((r) => JSON.stringify(r)));
   const duplicateScore = Math.max(0, (uniqueRows.size / totalRows) * 100);
 
   // 3. Consistency (20%)
-  // Check if columns have consistent data types (number vs string)
-  let consistencyScore = 0;
-  let totalConsistencyScores = 0;
-
+  // Consistency Score = (Rows passing type checks) / Total rows * 100
+  // First, determine dominant type for each column
+  const columnDominantTypes: Record<string, 'numeric' | 'string'> = {};
   for (const header of headers) {
     let numCount = 0;
     let strCount = 0;
-    let totalNonEmpty = 0;
+    for (const row of rows) {
+      const val = row[header];
+      if (val !== null && val !== undefined && String(val).trim() !== '' && String(val).trim().toUpperCase() !== 'N/A') {
+        if (!isNaN(Number(val))) numCount++;
+        else strCount++;
+      }
+    }
+    columnDominantTypes[header] = numCount > strCount ? 'numeric' : 'string';
+  }
+
+  // Row-level check: a row passes if ALL cells conform to the column's dominant type
+  let consistentRows = 0;
+  for (const row of rows) {
+    let rowPasses = true;
+    for (const header of headers) {
+      const val = row[header];
+      const isEmpty = val === null || val === undefined || String(val).trim() === '' || String(val).trim().toUpperCase() === 'N/A';
+      
+      // Empty cells are ignored for consistency type checking (already penalized in completeness)
+      if (!isEmpty) {
+        const isNumeric = !isNaN(Number(val));
+        const dominantType = columnDominantTypes[header];
+        if (dominantType === 'numeric' && !isNumeric) {
+          rowPasses = false;
+          break;
+        }
+        // If dominant type is string, anything passes (numbers can be parsed as strings)
+      }
+    }
+    if (rowPasses) consistentRows++;
+  }
+  const consistencyScore = Math.max(0, (consistentRows / totalRows) * 100);
+
+  // 4. Formatting (10%)
+  // Formatting Score = (Columns with consistent formats) / Total columns * 100
+  let consistentColumns = 0;
+  for (const header of headers) {
+    let hasWhitespaceIssue = false;
+    let hasInconsistentCasing = false;
+    let textValuesCount = 0;
+
+    let upperCount = 0;
+    let lowerCount = 0;
 
     for (const row of rows) {
       const val = row[header];
-      if (val !== null && val !== undefined && String(val).trim() !== '') {
-        totalNonEmpty++;
-        if (!isNaN(Number(val))) {
-          numCount++;
-        } else {
-          strCount++;
-        }
-      }
-    }
-
-    if (totalNonEmpty > 0) {
-      const majorityRatio = Math.max(numCount, strCount) / totalNonEmpty;
-      totalConsistencyScores += majorityRatio * 100;
-    } else {
-      totalConsistencyScores += 100; // Empty columns are technically consistent
-    }
-  }
-  consistencyScore = totalConsistencyScores / headers.length;
-
-  // 4. Formatting (10%)
-  // Check for leading/trailing spaces or messy capitalization
-  let formattingIssues = 0;
-  let textCells = 0;
-
-  for (const row of rows) {
-    for (const header of headers) {
-      const val = row[header];
-      if (val !== null && val !== undefined && String(val).trim() !== '') {
+      if (val !== null && val !== undefined && String(val).trim() !== '' && String(val).trim().toUpperCase() !== 'N/A') {
         const strVal = String(val);
+        // Whitespace check
+        if (strVal !== strVal.trim()) {
+          hasWhitespaceIssue = true;
+        }
+        // Casing check (for non-numeric strings)
         if (isNaN(Number(strVal))) {
-          textCells++;
-          // Issue if leading/trailing whitespace
-          if (strVal !== strVal.trim()) {
-            formattingIssues++;
-          }
+          textValuesCount++;
+          if (strVal === strVal.toUpperCase()) upperCount++;
+          if (strVal === strVal.toLowerCase()) lowerCount++;
         }
       }
     }
-  }
 
-  const formattingScore = textCells > 0
-    ? Math.max(0, ((textCells - formattingIssues) / textCells) * 100)
-    : 100; // if no text, formatting is fine
+    // If there are text values, they should have consistent casing
+    // It's inconsistent if some are uppercase and some are lowercase
+    if (textValuesCount > 0) {
+      if (upperCount > 0 && lowerCount > 0 && upperCount !== textValuesCount && lowerCount !== textValuesCount) {
+        // Just a heuristic for mixed casing
+        hasInconsistentCasing = true;
+      }
+    }
+
+    if (!hasWhitespaceIssue && !hasInconsistentCasing) {
+      consistentColumns++;
+    }
+  }
+  const formattingScore = Math.max(0, (consistentColumns / headers.length) * 100);
 
   // Final Weighted Score
   const finalScore =
@@ -105,11 +139,10 @@ export function calculateQualityScore(
 
   const roundedScore = Math.round(finalScore);
 
-  let grade = 'F';
-  if (roundedScore >= 90) grade = 'A';
-  else if (roundedScore >= 80) grade = 'B';
-  else if (roundedScore >= 70) grade = 'C';
-  else if (roundedScore >= 60) grade = 'D';
+  let grade = 'Needs Attention';
+  if (roundedScore >= 90) grade = 'Excellent';
+  else if (roundedScore >= 75) grade = 'Good';
+  else if (roundedScore >= 60) grade = 'Fair';
 
   return {
     score: roundedScore,

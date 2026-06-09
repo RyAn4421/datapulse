@@ -11,19 +11,19 @@ interface AlertPanelProps {
 }
 
 const severityConfig = {
-  critical: {
+  High: {
     icon: AlertTriangle,
     color: 'text-rose-500',
     bg: 'bg-rose-500/10',
     border: 'border-rose-500/20',
   },
-  warning: {
+  Medium: {
     icon: AlertCircle,
     color: 'text-amber-500',
     bg: 'bg-amber-500/10',
     border: 'border-amber-500/20',
   },
-  info: {
+  Low: {
     icon: Info,
     color: 'text-cyan-500',
     bg: 'bg-cyan-500/10',
@@ -59,7 +59,7 @@ export default function AlertPanel({ alerts, isLoading }: AlertPanelProps) {
           <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
             <CheckCircle2 className="w-5 h-5 text-emerald-500" />
           </div>
-          <p className="text-sm text-text-muted">No smart alerts found. Dataset looks clean.</p>
+          <p className="text-sm text-text-muted">No alerts detected. Your dataset looks healthy.</p>
         </div>
       </div>
     );

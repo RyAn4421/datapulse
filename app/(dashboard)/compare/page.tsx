@@ -1,14 +1,16 @@
 'use client'
 import { useState, useMemo, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { GitCompare, ArrowUp, ArrowDown, Minus } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { GitCompare, ArrowUp, ArrowDown, Sparkles, RefreshCw, AlertTriangle } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend, LineChart, Line
 } from 'recharts'
-import useSWR from 'swr'
+import useSWR, { useSWRConfig } from 'swr'
 import SimpleDropdown from '@/components/ui/SimpleDropdown'
 import { prepareChartData } from '@/lib/utils'
+import { calculateUniversalMetrics } from '@/lib/analytics/universal-metrics'
+import posthog from 'posthog-js'
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
@@ -30,6 +32,7 @@ const tooltipStyle = {
 
 export default function ComparePage() {
   const { data: allDatasets } = useSWR('/api/datasets', fetcher, { revalidateOnFocus: false })
+  const { mutate } = useSWRConfig()
 
   const [datasetA, setDatasetA] = useState<string>('')
   const [datasetB, setDatasetB] = useState<string>('')
@@ -38,12 +41,26 @@ export default function ComparePage() {
   const { data: dsA } = useSWR(datasetA ? `/api/datasets/${datasetA}` : null, fetcher)
   const { data: dsB } = useSWR(datasetB ? `/api/datasets/${datasetB}` : null, fetcher)
 
+  // AI Comparison Summary
+  const compareUrl = dsA && dsB ? `/api/ai-insights/compare?datasetAId=${dsA._id}&datasetBId=${dsB._id}` : null
+  const { data: aiComparison, isLoading: aiLoading, isValidating: aiValidating } = useSWR(compareUrl, fetcher, { revalidateOnFocus: false })
+
   const rowsA = useMemo(() => dsA?.rows ?? [], [dsA])
   const rowsB = useMemo(() => dsB?.rows ?? [], [dsB])
   const headersA = useMemo(() => dsA?.headers ?? [], [dsA])
   const headersB = useMemo(() => dsB?.headers ?? [], [dsB])
 
-  // Find common columns between both datasets
+  const metricsA = useMemo(() => dsA && rowsA.length > 0 ? calculateUniversalMetrics(dsA, rowsA) : null, [dsA, rowsA])
+  const metricsB = useMemo(() => dsB && rowsB.length > 0 ? calculateUniversalMetrics(dsB, rowsB) : null, [dsB, rowsB])
+
+  // Track compare_opened
+  useEffect(() => {
+    if (dsA && dsB) {
+      posthog.capture('compare_opened', { datasetAId: dsA._id, datasetBId: dsB._id })
+    }
+  }, [dsA, dsB])
+
+  // Find common columns
   const commonCols = useMemo(() =>
     headersA.filter((h: string) => headersB.includes(h)),
     [headersA, headersB]
@@ -54,13 +71,13 @@ export default function ComparePage() {
   const [xCol, setXCol] = useState('')
   const [yCol, setYCol] = useState('')
 
-  // Auto-set cols when common cols found
+  // Auto-set cols
   useEffect(() => {
     if (commonCatCols[0]) setXCol(commonCatCols[0])
     if (commonNumCols[0]) setYCol(commonNumCols[0])
   }, [commonCatCols, commonNumCols])
 
-  // Build chart data for both
+  // Build chart data
   const chartA = useMemo(() => {
     if (!xCol || !yCol || rowsA.length === 0) return []
     return prepareChartData(rowsA, headersA, xCol, yCol, 'sum')
@@ -81,21 +98,6 @@ export default function ComparePage() {
     }))
   }, [chartA, chartB, dsA, dsB])
 
-  // KPI comparison
-  const kpiA = useMemo(() => ({
-    total: rowsA.length,
-    sum: chartA.reduce((a, b) => a + b.value, 0),
-    avg: chartA.reduce((a, b) => a + b.value, 0) / (chartA.length || 1),
-    categories: chartA.length,
-  }), [rowsA, chartA])
-
-  const kpiB = useMemo(() => ({
-    total: rowsB.length,
-    sum: chartB.reduce((a, b) => a + b.value, 0),
-    avg: chartB.reduce((a, b) => a + b.value, 0) / (chartB.length || 1),
-    categories: chartB.length,
-  }), [rowsB, chartB])
-
   const datasetOptions = useMemo(() =>
     (allDatasets ?? []).map((ds: { _id: string; name: string }) => ds.name),
     [allDatasets]
@@ -103,22 +105,41 @@ export default function ComparePage() {
   const getIdByName = (name: string) =>
     allDatasets?.find((ds: { _id: string; name: string }) => ds.name === name)?._id ?? ''
 
-  const DiffBadge = ({ a, b }: { a: number; b: number }) => {
+  const handleRegenerateSummary = async () => {
+    if (!compareUrl) return
+    posthog.capture('compare_summary_expanded')
+    await fetch(`${compareUrl}&force=true`)
+    mutate(compareUrl)
+  }
+
+  const DiffBadge = ({ a, b, isHigherBetter = true }: { a: number; b: number; isHigherBetter?: boolean }) => {
     if (a === 0 && b === 0) return <span className="text-text-muted text-xs">—</span>
     const diff = b - a
     const pct = a !== 0 ? ((diff / Math.abs(a)) * 100).toFixed(1) : '∞'
-    const positive = diff >= 0
+    const positive = diff > 0
+    const color = positive === isHigherBetter ? 'text-success' : 'text-danger'
+    if (diff === 0) return <span className="text-text-muted text-xs">0%</span>
     return (
-      <span className={`flex items-center gap-0.5 text-xs font-mono font-medium ${positive ? 'text-success' : 'text-danger'}`}>
+      <span className={`flex items-center gap-0.5 text-xs font-mono font-medium ${color}`}>
         {positive ? <ArrowUp size={10} /> : <ArrowDown size={10} />}
         {Math.abs(Number(pct))}%
       </span>
     )
   }
 
+  // Not enough datasets
+  if (allDatasets && allDatasets.length < 2) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6">
+        <GitCompare size={48} className="text-text-muted mb-4 opacity-40" />
+        <p className="text-text font-semibold mb-2">Comparison Mode</p>
+        <p className="text-text-muted text-sm">Add a second dataset to use Compare.</p>
+      </div>
+    )
+  }
+
   return (
     <motion.div initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.22 }} className="p-5 space-y-5">
-
       {/* Header */}
       <div>
         <h1 className="text-xl font-semibold text-text flex items-center gap-2">
@@ -165,6 +186,125 @@ export default function ComparePage() {
       {/* Comparison content */}
       {dsA && dsB && (
         <>
+          {/* AI Comparison Summary */}
+          <div className="bg-bg-card border border-border rounded-xl p-5 relative overflow-hidden">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+            <div className="flex justify-between items-start mb-4">
+              <h2 className="text-sm font-semibold text-text flex items-center gap-2">
+                <Sparkles size={16} className="text-accent" /> AI Comparison Summary
+              </h2>
+              <button
+                onClick={handleRegenerateSummary}
+                disabled={aiLoading || aiValidating}
+                className="text-xs flex items-center gap-1.5 px-2 py-1 bg-bg-hover rounded text-text-muted hover:text-text transition-colors disabled:opacity-50"
+              >
+                <RefreshCw size={12} className={(aiLoading || aiValidating) ? 'animate-spin' : ''} />
+                Regenerate
+              </button>
+            </div>
+
+            {(aiLoading || aiValidating) && !aiComparison?.summary ? (
+              <div className="space-y-3 animate-pulse">
+                <div className="h-4 bg-bg-hover rounded w-full" />
+                <div className="h-4 bg-bg-hover rounded w-5/6" />
+                <div className="h-4 bg-bg-hover rounded w-4/6" />
+              </div>
+            ) : aiComparison?.error ? (
+              <div className="flex items-center gap-2 text-danger text-sm bg-danger/10 p-3 rounded-lg border border-danger/20">
+                <AlertTriangle size={16} /> Failed to generate AI comparison. Please regenerate.
+              </div>
+            ) : aiComparison?.summary ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-bg-hover/50 p-3 rounded-lg border border-border/50">
+                  <p className="text-[10px] font-mono uppercase tracking-wider text-text-muted mb-1">Key Differences</p>
+                  <p className="text-sm text-text leading-relaxed">{aiComparison.summary.keyDifferences}</p>
+                </div>
+                <div className="bg-bg-hover/50 p-3 rounded-lg border border-border/50">
+                  <p className="text-[10px] font-mono uppercase tracking-wider text-text-muted mb-1">Quality Assessment</p>
+                  <p className="text-sm text-text leading-relaxed">{aiComparison.summary.qualityAssessment}</p>
+                </div>
+                <div className="bg-bg-hover/50 p-3 rounded-lg border border-border/50">
+                  <p className="text-[10px] font-mono uppercase tracking-wider text-warning mb-1">Risk Analysis</p>
+                  <p className="text-sm text-text leading-relaxed">{aiComparison.summary.riskAnalysis}</p>
+                </div>
+                <div className="bg-bg-hover/50 p-3 rounded-lg border border-border/50">
+                  <p className="text-[10px] font-mono uppercase tracking-wider text-success mb-1">Recommendation</p>
+                  <p className="text-sm text-text leading-relaxed">{aiComparison.summary.recommendation}</p>
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          {/* Universal Metrics Scorecard */}
+          {metricsA && metricsB && (
+            <div className="bg-bg-card border border-border rounded-xl overflow-hidden">
+              <div className="p-4 border-b border-border">
+                <h3 className="text-sm font-semibold text-text">Universal Metrics Scorecard</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-bg-hover">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-mono text-text-muted uppercase">Metric</th>
+                      <th className="px-4 py-2 text-right text-xs font-mono text-accent uppercase">{dsA.name}</th>
+                      <th className="px-4 py-2 text-right text-xs font-mono text-cyan uppercase">{dsB.name}</th>
+                      <th className="px-4 py-2 text-right text-xs font-mono text-text-muted uppercase">Difference</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    <tr className="hover:bg-bg-hover transition-colors">
+                      <td className="px-4 py-3 text-text-muted text-sm">Row Count</td>
+                      <td className="px-4 py-3 text-right font-mono text-accent">{fmt(metricsA.rowCount)}</td>
+                      <td className="px-4 py-3 text-right font-mono text-cyan">{fmt(metricsB.rowCount)}</td>
+                      <td className="px-4 py-3 text-right flex justify-end"><DiffBadge a={metricsA.rowCount} b={metricsB.rowCount} isHigherBetter={true} /></td>
+                    </tr>
+                    <tr className="hover:bg-bg-hover transition-colors">
+                      <td className="px-4 py-3 text-text-muted text-sm">Column Count</td>
+                      <td className="px-4 py-3 text-right font-mono text-accent">{metricsA.colCount}</td>
+                      <td className="px-4 py-3 text-right font-mono text-cyan">{metricsB.colCount}</td>
+                      <td className="px-4 py-3 text-right flex justify-end"><DiffBadge a={metricsA.colCount} b={metricsB.colCount} isHigherBetter={true} /></td>
+                    </tr>
+                    <tr className="hover:bg-bg-hover transition-colors">
+                      <td className="px-4 py-3 text-text-muted text-sm">Data Quality Score</td>
+                      <td className="px-4 py-3 text-right font-mono text-accent">{metricsA.qualityScore}%</td>
+                      <td className="px-4 py-3 text-right font-mono text-cyan">{metricsB.qualityScore}%</td>
+                      <td className="px-4 py-3 text-right flex justify-end"><DiffBadge a={metricsA.qualityScore} b={metricsB.qualityScore} isHigherBetter={true} /></td>
+                    </tr>
+                    <tr className="hover:bg-bg-hover transition-colors">
+                      <td className="px-4 py-3 text-text-muted text-sm">Missing Value Rate</td>
+                      <td className="px-4 py-3 text-right font-mono text-accent">{metricsA.missingValueRate.toFixed(1)}%</td>
+                      <td className="px-4 py-3 text-right font-mono text-cyan">{metricsB.missingValueRate.toFixed(1)}%</td>
+                      <td className="px-4 py-3 text-right flex justify-end"><DiffBadge a={metricsA.missingValueRate} b={metricsB.missingValueRate} isHigherBetter={false} /></td>
+                    </tr>
+                    <tr className="hover:bg-bg-hover transition-colors">
+                      <td className="px-4 py-3 text-text-muted text-sm">Duplicate Rate</td>
+                      <td className="px-4 py-3 text-right font-mono text-accent">{metricsA.duplicateRate.toFixed(1)}%</td>
+                      <td className="px-4 py-3 text-right font-mono text-cyan">{metricsB.duplicateRate.toFixed(1)}%</td>
+                      <td className="px-4 py-3 text-right flex justify-end"><DiffBadge a={metricsA.duplicateRate} b={metricsB.duplicateRate} isHigherBetter={false} /></td>
+                    </tr>
+                    <tr className="hover:bg-bg-hover transition-colors">
+                      <td className="px-4 py-3 text-text-muted text-sm">Dataset Size</td>
+                      <td className="px-4 py-3 text-right font-mono text-accent">{metricsA.fileSizeFormatted}</td>
+                      <td className="px-4 py-3 text-right font-mono text-cyan">{metricsB.fileSizeFormatted}</td>
+                      <td className="px-4 py-3 text-right text-text-muted text-xs font-mono">—</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Schema Mismatch Alert */}
+          {commonCols.length === 0 && (
+            <div className="bg-warning/10 border border-warning/30 rounded-xl p-4 flex items-center gap-3 text-sm text-warning">
+              <AlertTriangle size={20} className="flex-shrink-0" />
+              <div>
+                <span className="font-semibold block">Schema Mismatch Detected</span>
+                These datasets have no columns in common. Comparison charts require at least one shared column.
+              </div>
+            </div>
+          )}
+
           {/* Column selectors */}
           {commonCols.length > 0 && (
             <div className="bg-bg-card border border-border rounded-xl p-4 flex flex-wrap gap-4">
@@ -179,48 +319,8 @@ export default function ComparePage() {
             </div>
           )}
 
-          {commonCols.length === 0 && (
-            <div className="bg-warning/10 border border-warning/30 rounded-xl p-4 text-sm text-warning">
-              These datasets have no columns in common. Comparison charts require at least one shared column.
-            </div>
-          )}
-
-          {/* KPI comparison table */}
-          <div className="bg-bg-card border border-border rounded-xl overflow-hidden">
-            <div className="p-4 border-b border-border">
-              <h3 className="text-sm font-semibold text-text">Key Metrics Comparison</h3>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-bg-hover">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-xs font-mono text-text-muted uppercase">Metric</th>
-                    <th className="px-4 py-2 text-right text-xs font-mono text-accent uppercase">{dsA.name}</th>
-                    <th className="px-4 py-2 text-right text-xs font-mono text-cyan uppercase">{dsB.name}</th>
-                    <th className="px-4 py-2 text-right text-xs font-mono text-text-muted uppercase">Difference</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {[
-                    { label: 'Total Records', a: kpiA.total, b: kpiB.total },
-                    { label: `Total ${yCol}`, a: kpiA.sum, b: kpiB.sum },
-                    { label: `Average ${yCol}`, a: kpiA.avg, b: kpiB.avg },
-                    { label: `${xCol} Categories`, a: kpiA.categories, b: kpiB.categories },
-                  ].map((row, i) => (
-                    <tr key={i} className="hover:bg-bg-hover transition-colors">
-                      <td className="px-4 py-3 text-text-muted text-sm">{row.label}</td>
-                      <td className="px-4 py-3 text-right font-mono text-accent">{fmt(row.a)}</td>
-                      <td className="px-4 py-3 text-right font-mono text-cyan">{fmt(row.b)}</td>
-                      <td className="px-4 py-3 text-right"><DiffBadge a={row.a} b={row.b} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
           {/* Overlaid grouped bar chart */}
-          {mergedData.length > 0 && (
+          {commonCols.length > 0 && mergedData.length > 0 && (
             <div className="bg-bg-card border border-border rounded-xl p-5">
               <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
               <h3 className="text-sm font-semibold text-text mb-4">{yCol} by {xCol} — Side by Side</h3>
@@ -239,7 +339,7 @@ export default function ComparePage() {
           )}
 
           {/* Line chart overlay */}
-          {mergedData.length > 0 && (
+          {commonCols.length > 0 && mergedData.length > 0 && (
             <div className="bg-bg-card border border-border rounded-xl p-5">
               <h3 className="text-sm font-semibold text-text mb-4">{yCol} Trend Comparison</h3>
               <ResponsiveContainer width="100%" height={220}>

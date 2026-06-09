@@ -180,7 +180,7 @@ export default function DashboardPage() {
           { label: `Total ${num0}`, value: fmt(agg0.reduce((a, b) => a + b.value, 0)), icon: TrendingUp, color: '#10B981' },
           { label: `Avg ${num0}`, value: fmt(avgData[0]?.value ?? 0), icon: Activity, color: '#22D3EE' },
           { label: 'Categories', value: fmt(countData.length), icon: Layers, color: '#F59E0B' },
-          { label: 'Data Quality', value: `${quality.score}%`, icon: CheckCircle2, color: quality.score < 70 ? '#EF4444' : '#8B5CF6' },
+          { label: 'Data Quality', value: `${quality.score}%`, icon: CheckCircle2, color: quality.score < 75 ? '#EF4444' : '#8B5CF6' },
         ].map((kpi, i) => (
           <motion.div key={i}
             initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}
