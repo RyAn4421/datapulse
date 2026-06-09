@@ -1,0 +1,1095 @@
+================================================================
+DATAPULSE — PRODUCT SPECIFICATION v5
+Engineering-Ready Sprint Plan
+================================================================
+
+DOCUMENT HISTORY
+----------------
+v1 — Initial feature wish list
+v2 — Phased structure + sprint mapping added
+v3 — Acceptance criteria, error states, success metrics, dependencies added
+v4 — Risk register, NFRs, alert thresholds, quality score formula,
+      AI response contract, API cost model, Why This Insight moved to
+      Sprint 1B (data layer only), share link simplified
+v5 — Pagination strategy fixed (full-dataset aggregation for KPIs/alerts/
+      summaries; pagination for raw tables only), quality score weight
+      justification added, comparison cache key changed to hash-based,
+      share link revocation logging added, analytics event dictionary
+      added as appendix, lightweight recommendation surfaced in Sprint 1B
+      via existing ExecutiveSummary contract fields
+
+MEASUREMENT TOOLS LEGEND
+--------------------------
+All success metrics tracked via:
+- Posthog       (event tracking, funnels, session analytics)
+- Console logs  (performance timing, error rates)
+- Manual QA     (export quality, file validation)
+
+
+================================================================
+SECTION 1 — NON-FUNCTIONAL REQUIREMENTS
+(Applies to entire product, all sprints)
+================================================================
+
+PERFORMANCE
+-----------
+Dashboard load          < 2 seconds   (dataset up to 500 rows)
+Compare page render     < 2 seconds
+AI Executive Summary    < 3 seconds   (dataset up to 10,000 rows)
+Report generation       < 5 seconds
+Alert generation        < 1 second
+Share link generation   < 1 second
+PPTX export             < 10 seconds
+
+SECURITY
+--------
+- Every user's datasets are fully isolated. No cross-user data access.
+- Shared report URLs are signed tokens. Raw dataset never exposed via link.
+- No public access to uploaded datasets under any circumstance.
+- Shared links do not expire automatically (MVP). Manual revoke by owner.
+  Note: Expiration policies deferred to future enterprise tier.
+
+RELIABILITY
+-----------
+- Report generation success rate       ≥ 99%
+- AI Summary generation success rate   ≥ 95%
+- Alert generation success rate        ≥ 99%
+- PPTX export success rate             ≥ 95%
+
+AI COST MANAGEMENT
+------------------
+Problem:
+  If every dataset load triggers a fresh LLM call, a user who uploads
+  10 datasets in one session generates 10 API calls. At scale this
+  becomes expensive and slow.
+
+Rule:
+  Generate AI Executive Summary ONCE on dataset upload.
+  Cache the result against the dataset ID.
+  Serve cached summary on all subsequent views.
+  Only regenerate when:
+    (a) User explicitly clicks "Regenerate Summary", OR
+    (b) Dataset is replaced or updated.
+
+Applies to: Executive Summary, AI Comparison Summary, Insight Confidence.
+This rule is a performance optimisation AND a cost control.
+Both reasons matter.
+
+
+================================================================
+SECTION 2 — GLOBAL DEFINITIONS
+(Referenced throughout all sprints)
+================================================================
+
+----------------------------------------------------------------
+DATASET QUALITY SCORE FORMULA
+----------------------------------------------------------------
+
+Quality Score is a composite metric, always expressed as a percentage.
+
+  Quality Score =
+    Completeness Score    × 0.40
+  + Duplicate Score       × 0.30
+  + Consistency Score     × 0.20
+  + Formatting Score      × 0.10
+
+Component Definitions:
+
+  Completeness Score
+    = (Total cells - Empty cells) / Total cells × 100
+    Empty cell = null, blank string, or "N/A" literal.
+
+  Duplicate Score
+    = (Total rows - Duplicate rows) / Total rows × 100
+    Duplicate row = all column values identical to another row.
+
+  Consistency Score
+    = (Rows passing type checks) / Total rows × 100
+    Type check = each column's most common data type applied to all rows.
+    Example: If "Budget" column is 95% numeric, non-numeric rows fail.
+
+  Formatting Score
+    = (Columns with consistent formats) / Total columns × 100
+    Checks: date formats, currency formats, casing consistency.
+
+Weight Justification:
+  Completeness (40%) is weighted highest because missing data has the
+  greatest impact on analysis accuracy. An insight drawn from incomplete
+  data is unreliable regardless of how clean the rest is.
+  Duplicates (30%) are second because they directly distort aggregations —
+  a duplicated high-value row inflates averages and misleads every
+  downstream calculation.
+  Consistency (20%) matters but has lower impact because type
+  mismatches usually affect a minority of rows, not the whole dataset.
+  Formatting (10%) is cosmetic relative to the others — a date formatted
+  as DD/MM instead of MM/DD rarely changes a business conclusion.
+  These weights may be revised based on user feedback after Sprint 2 ships.
+
+Grade Bands:
+  90–100%   Excellent
+  75–89%    Good
+  60–74%    Fair
+  Below 60% Needs Attention
+
+This formula is used identically on:
+  - Dataset card in workspace
+  - Smart Alerts (data quality alert)
+  - Compare page scorecard
+  - Report quality section
+
+----------------------------------------------------------------
+SMART ALERT THRESHOLD DEFINITIONS
+----------------------------------------------------------------
+
+All thresholds are exact. Developers must not interpret or adjust these
+without a spec update.
+
+MISSING VALUES ALERT         [Severity: High]
+  Trigger: Missing value rate > 5% of total cells
+  Formula: (Empty cells / Total cells) × 100 > 5
+  Message: "X% of values are missing across Y columns."
+
+DUPLICATE RECORDS ALERT      [Severity: High]
+  Trigger: Duplicate rows > 2% of total rows
+  Formula: (Duplicate rows / Total rows) × 100 > 2
+  Message: "X duplicate records detected."
+
+BUDGET OUTLIER ALERT         [Severity: Medium]
+  Trigger: Any numeric value > mean + 2 standard deviations
+           OR any numeric value in top 5% of column distribution
+           (whichever catches more records — use the broader threshold)
+  Applies to: All numeric columns. Label uses column name.
+  Message: "Budget outlier detected: [Project Name] is 2.3x above average."
+
+CATEGORY DOMINANCE ALERT     [Severity: Medium]
+  Trigger: Any single category accounts for > 40% of total records
+           in a categorical column
+  Applies to: All columns with fewer than 20 unique string values.
+  Message: "[Category] represents X% of all records in [Column]."
+
+DATA QUALITY ALERT           [Severity: Low]
+  Trigger: Overall Quality Score < 75%
+  Message: "Data quality score is X%. Review missing values and formatting."
+
+NO ALERTS STATE
+  Message: "No alerts detected. Your dataset looks healthy."
+
+----------------------------------------------------------------
+AI RESPONSE CONTRACTS
+(Defines exact JSON structure returned by AI calls)
+----------------------------------------------------------------
+
+Executive Summary Contract
+--------------------------
+  interface ExecutiveSummary {
+    overview:       string   // max 50 words
+    topCategory:    string   // max 30 words
+    risk:           string   // max 40 words
+    recommendation: string   // max 40 words
+  }
+
+  Total summary word count must not exceed 200 words.
+  AI prompt must instruct: "Return only valid JSON. No preamble."
+  UI renders these four fields directly. Prompt changes that rename,
+  remove, or reorder keys will break the UI and require a UI update.
+
+Insight Confidence Contract
+---------------------------
+  interface InsightResult {
+    insight:    string           // the insight text
+    confidence: "High" | "Medium" | "Low"
+    evidence:   string[]         // array of supporting data points
+    metrics: {
+      value:    number
+      average:  number
+      delta:    string           // e.g. "+34% above average"
+    }
+  }
+
+AI Comparison Summary Contract
+------------------------------
+  interface ComparisonSummary {
+    keyDifferences:    string   // max 40 words
+    qualityAssessment: string   // max 30 words
+    riskAnalysis:      string   // max 30 words
+    recommendation:    string   // max 30 words
+  }
+
+  Total comparison summary word count must not exceed 150 words.
+
+Rules Engine vs AI Switch Trigger
+----------------------------------
+  Stay rules-based when:
+    Insights derived from aggregations, outliers, missing values,
+    or basic correlations. Example: "Highest budget category."
+
+  Switch to AI when:
+    System must explain trends, generate recommendations,
+    summarize multiple findings, or compare datasets narratively.
+
+  Concrete threshold:
+    Activate AI when Rules Engine covers < 70% of requested insights,
+    OR user submits a natural-language query.
+    Review this threshold at end of Sprint 2.
+
+
+================================================================
+SPRINT 1A — DASHBOARD FOUNDATION
+================================================================
+
+Goal
+----
+Deliver visible, reliable value without AI complexity.
+
+Dependencies
+------------
+None. This is the base sprint. All subsequent sprints depend on 1A.
+
+Definition of Done
+------------------
+- Dashboard loads in under 2 seconds for datasets up to 500 rows.
+- Smart Alerts render correctly for all 5 supported rule types.
+- Dashboard contains no duplicate visualizations.
+- Empty states and loading states implemented on every panel.
+- Alert thresholds (defined in Section 2) implemented exactly.
+- All acceptance criteria pass QA.
+
+RISK REGISTER — Sprint 1A
+--------------------------
+Risk: Large CSV causes slow dashboard render
+  Impact:     High
+  Likelihood: Medium
+  Mitigation: Always calculate KPIs, Alerts, Summary, and Reports
+              from the FULL dataset regardless of size.
+              Partial-row aggregation produces misleading insights —
+              e.g. first 500 rows of a 100,000-row dataset may
+              represent January only, hiding the real story.
+              Paginate ONLY raw data tables and the data explorer view.
+              Never paginate anything the user makes decisions from.
+
+  Full-dataset processing targets:
+              Under 10,000 rows:   process synchronously
+              10,000–100,000 rows: process async with progress indicator
+              Over 100,000 rows:   sample + stream with notice:
+              "Analysing full dataset. This may take a few seconds."
+
+Risk: Alert generation produces false positives
+  Impact:     Medium
+  Likelihood: Medium
+  Mitigation: Use exact thresholds defined in Section 2.
+              Add confidence note to each alert.
+              Allow user to dismiss individual alerts.
+
+Risk: Mobile layout breaks on smaller screens
+  Impact:     Low
+  Likelihood: Low
+  Mitigation: Test on 375px viewport minimum before sprint close.
+
+----------------------------------------------------------------
+FEATURE 1: Dashboard Cleanup
+----------------------------------------------------------------
+
+Acceptance Criteria
+- Maximum 8 major visual elements on screen.
+- KPI cards pinned at top.
+- Executive Summary placeholder section visible below KPIs.
+- Charts prioritized by business value (budget, trends, categories first).
+- No duplicate visualizations.
+- Mobile layout functional at 375px minimum width.
+
+Success Metrics
+- Dashboard bounce rate reduced 20% vs pre-cleanup baseline.
+  Measured via: Posthog — session exit events on /dashboard.
+  Baseline: capture current rate before 1A ships.
+  Timeframe: 30 days post-launch.
+- Average session duration increases 15%.
+  Measured via: Posthog — session length on /dashboard.
+  Timeframe: 30 days post-launch.
+- First meaningful content visible in under 2 seconds.
+  Measured via: Console logs — performance.now() on first chart render.
+
+Error States
+- Chart data unavailable:
+  "No data available for this visualization."
+- Dataset not loaded:
+  "Upload a dataset to view your dashboard."
+
+----------------------------------------------------------------
+FEATURE 2: Smart Alerts (Rules Engine Only)
+----------------------------------------------------------------
+
+Implementation Note
+  Use threshold definitions from Section 2 exactly.
+  Do not reinterpret or adjust thresholds without a spec update.
+
+Supported Alert Types (all 5 required)
+- Missing Values           [Severity: High]
+- Duplicate Records        [Severity: High]
+- Budget Outliers          [Severity: Medium]
+- Category Dominance       [Severity: Medium]
+- Data Quality Issues      [Severity: Low]
+
+Acceptance Criteria
+- Alert generation completes in under 1 second.
+- All 5 alert types implemented using thresholds from Section 2.
+- Alerts refresh automatically when dataset changes.
+- Severity levels (High / Medium / Low) displayed per alert.
+- User can dismiss individual alerts.
+
+Success Metrics
+- 60%+ of users interact with at least one alert per session.
+  Measured via: Posthog — click event on alert panel items.
+  Timeframe: 30 days post-launch.
+- Alert panel viewed in 70%+ of dashboard sessions.
+  Measured via: Posthog — visibility event on alert section.
+  Timeframe: 30 days post-launch.
+
+Error States
+- No alerts triggered:
+  "No alerts detected. Your dataset looks healthy."
+
+
+================================================================
+SPRINT 1B — INTELLIGENCE LAYER
+================================================================
+
+Goal
+----
+Add AI-generated summaries, confidence scoring, and evidence
+foundation for explainability.
+
+Dependencies
+------------
+- Sprint 1A fully complete and stable.
+- Executive Summary placeholder from 1A exists in DOM.
+- Dataset parsing pipeline stable.
+- AI response contracts (Section 2) reviewed by developer before work starts.
+- Caching rule (Section 1, AI Cost Management) implemented before
+  any LLM call goes to production.
+
+Definition of Done
+------------------
+- AI Summary generates and caches successfully for 90%+ of valid datasets.
+- Insight Confidence and evidence payload present on every AI insight.
+- Why This Insight evidence data structure populated (UI ships Sprint 2).
+- Average summary generation time under 3 seconds.
+- All failure states handled — no blank panels in production.
+- Cached summaries served on repeat views (verified via console logs).
+
+RISK REGISTER — Sprint 1B
+--------------------------
+Risk: OpenAI / LLM timeout exceeds 5 seconds
+  Impact:     High
+  Likelihood: Medium
+  Mitigation: Set API timeout at 8 seconds.
+              On timeout: display cached summary if available.
+              If no cache: show retry button.
+              "Summary taking longer than expected. [Retry]"
+
+Risk: LLM returns malformed JSON (breaks response contract)
+  Impact:     High
+  Likelihood: Medium
+  Mitigation: Validate response against ExecutiveSummary interface
+              before rendering. On validation failure: show retry.
+              Log malformed responses for prompt improvement.
+
+Risk: LLM cost spike from repeated generation
+  Impact:     Medium
+  Likelihood: High (without mitigation)
+  Mitigation: Enforce caching rule from Section 1.
+              Cache key = dataset ID + dataset hash.
+              Only call LLM on cache miss or explicit regeneration.
+
+Risk: AI summary quality too low for small datasets
+  Impact:     Medium
+  Likelihood: Medium
+  Mitigation: Enforce 20-row minimum before calling LLM.
+              Below minimum: show rules-based summary only.
+
+----------------------------------------------------------------
+FEATURE 3: AI Executive Summary
+----------------------------------------------------------------
+
+Implementation Note
+  Response must conform to ExecutiveSummary interface (Section 2).
+  Validate JSON before rendering. Cache result on first generation.
+
+Lightweight Recommendation Note
+  The ExecutiveSummary contract already includes `risk` and
+  `recommendation` fields. These are the lightweight recommendation
+  engine. No separate feature build is needed for Sprint 1B.
+  Ensure the AI prompt instructs the model to make the recommendation
+  specific and actionable, not generic.
+
+  Example of weak recommendation (reject):
+    "Review your data."
+  Example of strong recommendation (require):
+    "Marketing spend is concentrated in one category.
+     Review ROI before increasing budget in this area."
+
+  The full AI Recommendation Engine (Sprint 5) will expand this into
+  a dedicated module with multi-insight recommendations and impact
+  scoring. Sprint 1B surfaces the foundation.
+
+Sections (Always Present — Never Omit)
+- Overview
+- Top Category
+- Risk
+- Recommendation
+
+Acceptance Criteria
+- Maximum 200 words per summary.
+- Generates in under 3 seconds for datasets up to 10,000 rows.
+- Cached summary served instantly on repeat views.
+- Renders directly below KPI cards.
+- All 4 sections present in every generated summary.
+- Minimum dataset size: 20 rows.
+
+Success Metrics
+- 80%+ of users view summary section per session.
+  Measured via: Posthog — visibility event on summary component.
+  Timeframe: 30 days post-launch.
+- 50%+ of users read summary before scrolling further.
+  Measured via: Posthog — scroll depth vs summary position.
+  Timeframe: 30 days post-launch.
+- User satisfaction above 4/5.
+  Measured via: In-app thumbs up/down on summary component.
+  Timeframe: First 60 days post-launch.
+
+Error States
+- Dataset too small:
+  "Dataset too small for meaningful analysis.
+   Minimum 20 records recommended."
+- Generation failure / timeout:
+  "Unable to generate summary.
+   [Retry]"
+- Loading state:
+  "Generating insights..."
+
+----------------------------------------------------------------
+FEATURE 4: Insight Confidence + Evidence Data Layer
+----------------------------------------------------------------
+
+Implementation Note
+  Response must conform to InsightResult interface (Section 2).
+  Evidence data structure must be populated in Sprint 1B even though
+  the Why This Insight UI panel ships in Sprint 2.
+  Rationale: populating data now prevents a breaking data migration later.
+
+Confidence Scale
+  High   — strong evidence, multiple data points
+  Medium — partial evidence, moderate data points
+  Low    — limited data, treat as directional only
+
+Acceptance Criteria
+- Every AI insight includes Confidence, Evidence array, and Metrics.
+- Evidence panel expandable on click (basic expand/collapse in 1B).
+- Full "Why This Insight" UI panel ships in Sprint 2.
+
+Success Metrics
+- 90%+ of generated insights include evidence on render.
+  Measured via: Console logs — InsightResult payload validation.
+- Users expand evidence panel in 30%+ of sessions.
+  Measured via: Posthog — click event on evidence expand toggle.
+  Timeframe: 30 days post-launch.
+
+Error States
+- Evidence unavailable:
+  "Insufficient evidence available for this insight."
+
+
+================================================================
+SPRINT 2 — COMPARISON + EXPLAINABILITY
+================================================================
+
+Goal
+----
+Make Compare page a useful standalone feature and ship the
+Why This Insight UI using the data layer built in Sprint 1B.
+
+Dependencies
+------------
+- Sprints 1A and 1B complete.
+- InsightResult evidence data structure populated (Sprint 1B).
+- Quality Score formula (Section 2) implemented before scorecard.
+- Universal metrics module built before Compare page.
+- User must have at least 2 datasets loaded to access Compare.
+
+Definition of Done
+------------------
+- Any two datasets comparable regardless of schema.
+- Universal metrics always render even when schemas differ.
+- AI Comparison Summary generates and caches successfully.
+- Why This Insight panel renders evidence from Sprint 1B data layer.
+- All error states handled.
+
+RISK REGISTER — Sprint 2
+--------------------------
+Risk: Datasets with completely different schemas break comparison
+  Impact:     High
+  Likelihood: High
+  Mitigation: Always fall back to universal metrics (Section 2).
+              Show schema mismatch notice but never a blank page.
+
+Risk: Quality Score calculated differently across features
+  Impact:     Medium
+  Likelihood: High (without shared module)
+  Mitigation: Build Quality Score as a single shared utility function.
+              Import it in Compare, Dashboard, and Alerts.
+              Never recalculate inline.
+
+Risk: AI Comparison Summary timeout
+  Impact:     Medium
+  Likelihood: Low
+  Mitigation: Same pattern as Sprint 1B — timeout at 8s, retry button.
+              Cache key = hash(datasetA_content) + hash(datasetB_content).
+              Do NOT use dataset IDs as cache keys. If a dataset is
+              updated but retains its ID, an ID-based cache will serve
+              a stale comparison silently.
+              Hash-based keys invalidate automatically on any data change.
+
+----------------------------------------------------------------
+FEATURE 5: Dataset Scorecard
+----------------------------------------------------------------
+
+Universal Metrics (Always Displayed Regardless of Schema)
+- Row Count
+- Column Count
+- Data Quality Score (calculated via Section 2 formula)
+- Missing Value Rate (%)
+- Duplicate Rate (%)
+- Dataset Size (KB / MB)
+
+Acceptance Criteria
+- Comparison table renders in under 2 seconds.
+- All 6 universal metrics display even when schemas are completely different.
+- User can select any two datasets from workspace.
+- Quality Score uses the shared utility function from Section 2.
+
+Success Metrics
+- 40%+ of users with 2+ datasets visit Compare page.
+  Measured via: Posthog — page view event on /compare.
+  Timeframe: 45 days post-launch.
+- Compare page session retention above 60%.
+  Measured via: Posthog — time-on-page for /compare.
+  Timeframe: 45 days post-launch.
+
+Error States
+- Schema mismatch:
+  "Datasets have different structures.
+   Showing universal comparison metrics only."
+- No second dataset selected:
+  "Select another dataset to begin comparison."
+- Only one dataset in workspace:
+  "Add a second dataset to use Compare."
+
+----------------------------------------------------------------
+FEATURE 6: AI Comparison Summary
+----------------------------------------------------------------
+
+Implementation Note
+  Response must conform to ComparisonSummary interface (Section 2).
+  Cache result against hash of both dataset IDs.
+
+Summary Sections
+- Key Differences
+- Quality Assessment
+- Risk Analysis
+- Recommendation
+
+Acceptance Criteria
+- Maximum 150 words per summary.
+- Generates in under 4 seconds.
+- All 4 sections present in every generated summary.
+- Summary references specific metric values from scorecard.
+- Cached on first generation.
+
+Success Metrics
+- 50%+ of Compare sessions include summary expansion.
+  Measured via: Posthog — click on summary expand on /compare.
+  Timeframe: 45 days post-launch.
+
+Error States
+- Generation failure:
+  "Unable to generate comparison insights.
+   [Retry]"
+
+----------------------------------------------------------------
+FEATURE 7: Why This Insight (UI Panel)
+----------------------------------------------------------------
+
+Background
+  Data layer (InsightResult with evidence array) ships in Sprint 1B.
+  This feature ships the UI that surfaces it.
+  Reason for splitting: Sprint 1B is already the heaviest AI sprint.
+  Shipping the UI in Sprint 2 avoids overloading 1B without losing
+  the trust benefit — evidence data is present from day one.
+
+UI Behaviour
+  Every insight card shows a "Why?" button.
+  Click opens an inline panel showing:
+    Evidence data points
+    Supporting metrics (value, average, delta)
+    Confidence level with explanation
+
+Example
+  Insight: "Marketing has highest budget."
+  Why? panel:
+    Evidence:
+      12 projects
+      ₹181,256 total spend
+      34% above category average
+    Confidence: High
+    Based on: All projects in Marketing category, full date range.
+
+Acceptance Criteria
+- "Why?" button present on every AI insight card.
+- Panel opens inline (no modal, no page change).
+- Evidence populated from Sprint 1B data layer.
+- Panel renders in under 500ms (data already loaded).
+
+Success Metrics
+- "Why?" button clicked in 40%+ of insight sessions.
+  Measured via: Posthog — why_button_click event.
+  Timeframe: 30 days post-launch.
+
+Error States
+- Evidence not available:
+  "Explanation not available for this insight."
+
+
+================================================================
+SPRINT 3 — REPORTS & SHARING
+================================================================
+
+Goal
+----
+Deliver consultant-grade exports and secure shareable report links.
+
+Dependencies
+------------
+- Sprints 1A, 1B, 2 complete.
+- Executive Report structure must be finalised before PPTX export starts.
+  PPTX slides map directly to report sections.
+- Share Link depends on report generation being stable.
+  Build and test both exports before building share link.
+
+Definition of Done
+------------------
+- Reports export in PDF and PPTX with all required sections.
+- Shared reports accessible via secure signed read-only URL.
+- Export success rates meet reliability targets from Section 1.
+
+RISK REGISTER — Sprint 3
+--------------------------
+Risk: PPTX generation library incompatible with chart format
+  Impact:     High
+  Likelihood: Medium
+  Mitigation: Export charts as PNG images before PPTX generation.
+              Embed images in slides — do not use interactive charts.
+              Test with pptxgenjs or equivalent before sprint starts.
+
+Risk: Large reports time out during generation
+  Impact:     Medium
+  Likelihood: Medium
+  Mitigation: Use async generation with a loading state.
+              "Generating your report..." with progress indicator.
+              Notify user when ready if generation exceeds 5 seconds.
+
+Risk: Shared links expose dataset data unintentionally
+  Impact:     High
+  Likelihood: Low
+  Mitigation: Shared link renders report view only.
+              No raw data, no CSV download, no chart drill-down.
+              Signed tokens validated server-side on every request.
+
+----------------------------------------------------------------
+FEATURE 8: Executive Report
+----------------------------------------------------------------
+
+Report Sections (In Order)
+1. Executive Summary
+2. Key Findings
+3. Risks
+4. Opportunities
+5. Recommendations
+6. Visualizations & Charts
+
+Acceptance Criteria
+- All 6 sections present in every generated report.
+- Report generation completes in under 5 seconds.
+- Readable without access to source dataset.
+
+Success Metrics
+- Report export success rate above 95%.
+  Measured via: Console logs — export completion vs failure events.
+- Average generation time under 5 seconds.
+  Measured via: Console logs — performance.now() on export trigger.
+
+Error States
+- Insufficient data:
+  "Not enough data to generate a report.
+   Minimum 20 records required."
+
+----------------------------------------------------------------
+FEATURE 9: PPTX Export
+----------------------------------------------------------------
+
+Implementation Note
+  Charts exported as PNG images before deck generation.
+  Do not use interactive chart embeds in PPTX — they break in
+  older PowerPoint versions and Google Slides.
+
+Slide Structure
+- Slide 1:   Executive Summary
+- Slide 2:   Key Metrics
+- Slide 3:   Findings & Recommendations
+- Slide 4+:  Charts & Visualizations (one chart per slide)
+
+Acceptance Criteria
+- All required slides present in generated deck.
+- File opens correctly in Microsoft PowerPoint and Google Slides.
+- Charts render as static images.
+
+Success Metrics
+- PPTX export used in 40%+ of report generation sessions.
+  Measured via: Posthog — PPTX export click vs total report sessions.
+  Timeframe: 45 days post-launch.
+- Export success rate above 95%.
+  Measured via: Console logs — export completion vs failure events.
+
+Error States
+- Generation failure:
+  "Presentation generation failed.
+   Please try again."
+
+----------------------------------------------------------------
+FEATURE 10: Share Report Link
+----------------------------------------------------------------
+
+MVP Behaviour (Simplified from earlier draft)
+  - User clicks "Share" on a generated report.
+  - System generates a unique signed read-only URL: /report/[token]
+  - Links never expire automatically. Owner can manually revoke.
+  - No login required to view shared link.
+  - Shared view: report only. No dataset access. No editing.
+  Note: Link expiration policies deferred to future enterprise tier.
+
+Acceptance Criteria
+- Link generated in under 1 second.
+- Shared link renders report correctly for recipient without login.
+- Dataset not accessible via shared link under any circumstance.
+- Owner can revoke link from their report settings.
+- Revocation is logged in backend with:
+    revokedAt:  timestamp of revocation
+    revokedBy:  user ID of owner who revoked
+  This record is retained even after revocation for debugging and
+  audit purposes. Required for diagnosing "why can't I open this link"
+  support requests without manual database inspection.
+
+Success Metrics
+- Share link used in 25%+ of report sessions.
+  Measured via: Posthog — share button click on report page.
+  Timeframe: 45 days post-launch.
+- Shared links opened by recipients in 50%+ of cases.
+  Measured via: Posthog — page view on /report/[token] by non-owner.
+  Timeframe: 45 days post-launch.
+
+Error States
+- Link revoked:
+  "This report link has been revoked by the owner."
+- Report not found:
+  "Report unavailable or link is invalid."
+
+
+================================================================
+SPRINT 4 — USER ADOPTION
+================================================================
+
+Goal
+----
+Ensure new users reach their first AI insight within 60 seconds.
+
+Dependencies
+------------
+- Sprints 1A, 1B, 2, 3 complete.
+- All 5 sample datasets fully built and pre-analysed before sprint starts.
+  Do not start onboarding tour until gallery is live and tested.
+- Pre-generated summaries, alerts, insights must be bundled with
+  sample data. Never ship sample datasets with empty analysis panels.
+
+Definition of Done
+------------------
+- New users reach first AI insight within 2 minutes.
+- All 5 sample datasets load with pre-generated content.
+- Onboarding tour ends on AI Executive Summary (the aha moment).
+- Activity Log ships as Personal History.
+
+AHA MOMENT DEFINITION
+----------------------
+Onboarding is successful only when the user sees:
+  AI Executive Summary generated from data.
+All onboarding steps must lead to this moment.
+
+RISK REGISTER — Sprint 4
+--------------------------
+Risk: Sample datasets feel generic and unengaging
+  Impact:     Medium
+  Likelihood: Medium
+  Mitigation: Pre-generate interesting insights, not just correct ones.
+              Ensure each sample has at least one high-severity alert
+              and one AI recommendation with visible evidence.
+
+Risk: Onboarding tour dismissed before aha moment
+  Impact:     Medium
+  Likelihood: Medium
+  Mitigation: Make Step 3 (Executive Summary) the most visually
+              compelling step. Animate the summary generation.
+              Show skip option but make continuing feel easier.
+
+Risk: Pre-generated content becomes stale or inconsistent
+  Impact:     Low
+  Likelihood: Low
+  Mitigation: Store pre-generated content as static JSON per dataset.
+              Regenerate manually on each major AI prompt update.
+
+----------------------------------------------------------------
+FEATURE 11: Sample Dataset Gallery
+----------------------------------------------------------------
+
+Dataset Specifications
+
+Sales Dataset
+  Rows: 500 | Columns: 8
+  Fields: Revenue, Date, Region, Product, Salesperson,
+          Units Sold, Cost, Profit
+
+Marketing Dataset
+  Rows: 300 | Columns: 7
+  Fields: Campaign, Spend, Clicks, Conversions,
+          ROI, Channel, Month
+
+HR Dataset
+  Rows: 250 | Columns: 6
+  Fields: Employee, Department, Salary,
+          Experience (years), Performance Score, Role
+
+Finance Dataset
+  Rows: 400 | Columns: 8
+  Fields: Expenses, Revenue, Profit, Cost Center,
+          Quarter, Category, Budget, Variance
+
+Project Dataset
+  Rows: 500 | Columns: 10
+  Fields: Project, Budget, Category, Status, Duration,
+          Owner, Start Date, End Date, Priority, Completion %
+
+Required Pre-Generated Content (Every Sample Dataset)
+- Executive Summary (conforming to ExecutiveSummary interface)
+- Smart Alerts (at least 2 alerts, including 1 High severity)
+- AI Insights (minimum 5, each with confidence and evidence)
+- Example Report (PDF, all 6 sections populated)
+
+Acceptance Criteria
+- All 5 datasets available from Import page without login.
+- Each loads with pre-generated content visible immediately.
+- User reaches AI Executive Summary within 2 clicks of selecting sample.
+
+Success Metrics
+- 70%+ of new users open a sample dataset.
+  Measured via: Posthog — click on sample in gallery.
+  Timeframe: 30 days post-launch.
+- Time-to-first-insight under 60 seconds.
+  Measured via: Posthog — time between session start and
+  first summary visibility event.
+  Timeframe: 30 days post-launch.
+- 40%+ of sample users upload their own dataset afterward.
+  Measured via: Posthog — upload event following sample session.
+  Timeframe: 30 days post-launch.
+
+Error States
+- Gallery unavailable:
+  "Sample templates unavailable. Please try again later."
+
+----------------------------------------------------------------
+FEATURE 12: First-Time User Tour
+----------------------------------------------------------------
+
+Implementation: react-joyride
+
+Tour Steps
+
+Step 1 — Import Dataset
+  Highlight: Import button
+  Message: "Upload your own CSV or start with a sample dataset."
+
+Step 2 — Dashboard
+  Highlight: KPI cards + alerts panel
+  Message: "Key metrics and data alerts appear here instantly."
+
+Step 3 — Executive Summary  ← AHA MOMENT
+  Highlight: AI Executive Summary section
+  Message: "AI reads your data and surfaces what matters most."
+  Note: This is the most important step. Animate summary if possible.
+
+Step 4 — Report Builder
+  Highlight: Export / Report button
+  Message: "Turn your insights into a shareable executive report."
+
+Acceptance Criteria
+- Tour shows exactly once per user account.
+- Can be skipped at any step.
+- Progress saved — resumes from last step if closed mid-tour.
+- Tour ends on or after Step 3 (Executive Summary).
+
+Success Metrics
+- Tour completion rate above 60%.
+  Measured via: Posthog — tour_complete vs tour_start events.
+  Timeframe: 30 days post-launch.
+- 50%+ of tour completers generate a report.
+  Measured via: Posthog — export event after tour_complete.
+  Timeframe: 30 days post-launch.
+
+Error States
+- Tour state lost:
+  Restart from Step 1 silently. No error shown to user.
+
+----------------------------------------------------------------
+FEATURE 13: Activity Log (Personal History)
+----------------------------------------------------------------
+
+Decision Record
+---------------
+Option A (Audit Trail) considered and rejected.
+DataPulse is not a compliance platform at this stage.
+Audit trails require immutability and tamper-proofing at an
+engineering cost not warranted for MVP.
+
+Chosen: Option B — Personal History
+Upgrade path: Audit Trail available as future enterprise feature.
+
+Tracked Events
+- Recent datasets viewed
+- Recent reports generated
+- Recent charts created
+- Recent insights viewed
+
+Behaviour
+- User can clear entire history.
+- User can remove individual entries.
+- History persists across sessions (stored server-side per user).
+- Maximum 50 entries. Oldest entry removed when limit reached.
+
+Acceptance Criteria
+- History updates in real time as user navigates.
+- Clear all and remove single entry both functional.
+- Accessible from sidebar or settings panel.
+
+Success Metrics
+- 30%+ of returning users interact with activity log.
+  Measured via: Posthog — click on activity log items.
+  Timeframe: 45 days post-launch.
+
+Error States
+- History empty:
+  "No recent activity. Start by uploading a dataset."
+
+
+================================================================
+FEATURE STATUS REGISTER
+(Full accounting of all features across v1–v4)
+================================================================
+
+Feature                        | Sprint   | Status
+-------------------------------|----------|----------------------
+Dashboard Cleanup              | 1A       | Planned
+Smart Alerts (Rules Engine)    | 1A       | Planned
+AI Executive Summary           | 1B       | Planned
+Insight Confidence + Evidence  | 1B       | Planned (data layer)
+Why This Insight (UI)          | 2        | Planned
+Dataset Scorecard (Compare)    | 2        | Planned
+AI Comparison Summary          | 2        | Planned
+Executive Report               | 3        | Planned
+PPTX Export                    | 3        | Planned
+Share Report Link              | 3        | Planned
+Sample Dataset Gallery         | 4        | Planned
+Onboarding Tour                | 4        | Planned
+Activity Log (Personal Hist.)  | 4        | Planned
+AI Recommendation Engine       | 5        | Deferred post-MVP
+Comments & Mentions            | 5        | Deferred post-MVP
+Dataset Metadata / Versioning  | 5        | Deferred post-MVP
+Ask Your Data (NL Query)       | 6        | Deferred post-MVP
+AI Data Cleaning               | 6        | Deferred post-MVP
+Forecasting                    | 6        | Deferred post-MVP
+Workspace Analytics Overview   | 6        | Deferred post-MVP
+Dashboard Builder (drag-drop)  | 6        | Deferred post-MVP
+Link Expiration / Enterprise   | Future   | Deliberately deferred
+
+
+================================================================
+APPENDIX A — ANALYTICS EVENT DICTIONARY
+(All Posthog events referenced in this spec)
+================================================================
+
+This is the single source of truth for event names.
+All developers must use these exact strings.
+Do not create new event names without updating this dictionary.
+
+Event Name                | Fired When
+--------------------------|------------------------------------------
+summary_viewed            | Executive Summary section becomes visible
+summary_regenerated       | User clicks "Retry" or "Regenerate"
+alert_clicked             | User clicks any alert in the alerts panel
+alert_dismissed           | User dismisses an individual alert
+why_button_clicked        | User clicks "Why?" on any insight card
+evidence_expanded         | User expands evidence panel on an insight
+compare_opened            | User navigates to Compare page
+compare_summary_expanded  | User expands AI Comparison Summary
+report_generated          | Report generation completes successfully
+report_generation_failed  | Report generation fails
+pdf_exported              | User downloads PDF report
+pptx_exported             | User downloads PPTX presentation
+share_link_created        | User generates a share link
+share_link_opened         | Recipient opens a shared report link
+share_link_revoked        | Owner revokes a share link
+sample_dataset_opened     | User selects a sample dataset from gallery
+dataset_uploaded          | User uploads their own CSV
+tour_started              | Onboarding tour begins
+tour_step_completed       | User advances a tour step (include step number)
+tour_skipped              | User skips the tour (include step number)
+tour_completed            | User completes all tour steps
+activity_log_item_clicked | User clicks an item in the Activity Log
+activity_log_cleared      | User clears their full activity history
+
+Implementation Notes
+- All events fire client-side via Posthog.capture().
+- Include dataset_id as a property on all dataset-related events.
+- Include user_id on all events for funnel analysis.
+- tour_step_completed and tour_skipped must include { step: number }
+  so drop-off analysis works per step.
+
+
+================================================================
+APPENDIX B — PLANNING FREEZE NOTICE
+================================================================
+
+This spec is now frozen at v5.
+
+The planning phase is complete. The following questions are
+answered for every feature in Sprints 1–4:
+
+  What are we building?         Yes — feature descriptions + AC
+  How do we know it's done?     Yes — Definition of Done per sprint
+  What happens when it fails?   Yes — error states + risk register
+  How do we measure value?      Yes — success metrics + event dictionary
+  What could go wrong?          Yes — risk register with mitigations
+  What are the constraints?     Yes — NFRs in Section 1
+
+The next milestone is Sprint 1A execution, not further planning.
+Refinement of Sprints 5–6 (deferred features) happens after
+Sprint 4 ships and real user data is available.
+
+
+================================================================
+END OF SPEC — DataPulse v5
+================================================================

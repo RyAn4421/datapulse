@@ -1,5 +1,12 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+export interface IExecutiveSummary {
+  overview: string;
+  topCategory: string;
+  risk: string;
+  recommendation: string;
+}
+
 export interface IDataset extends Document {
   userId: string; // Stored consistently as session.user.email
   name: string;
@@ -12,6 +19,10 @@ export interface IDataset extends Document {
   numericCols: string[];
   categoricalCols: string[];
   tags: string[];
+  // Sprint 1B — AI Summary Cache
+  aiSummary?: IExecutiveSummary;
+  summaryHash?: string;          // SHA-256 of headers + first 100 rows + rowCount
+  summaryGeneratedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -28,6 +39,15 @@ const DatasetSchema = new Schema<IDataset>({
   numericCols: [String],
   categoricalCols: [String],
   tags: [String],
+  // Sprint 1B — AI Summary Cache
+  aiSummary: {
+    overview:       { type: String },
+    topCategory:    { type: String },
+    risk:           { type: String },
+    recommendation: { type: String },
+  },
+  summaryHash:        { type: String },
+  summaryGeneratedAt: { type: Date },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

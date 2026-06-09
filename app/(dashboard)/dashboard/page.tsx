@@ -11,13 +11,14 @@ import useSWR from 'swr'
 import Link from 'next/link'
 import {
   Database, TrendingUp, Activity, Layers, CheckCircle2,
-  Printer, FileText
+  Printer
 } from 'lucide-react'
 import { useStore as useDashboardStore } from '@/lib/store'
 import type { DatasetMeta } from '@/types'
 import ChartCard from '@/components/dashboard/ChartCard'
 import DashboardSkeleton from '@/components/dashboard/DashboardSkeleton'
 import AlertPanel from '@/components/dashboard/AlertPanel'
+import ExecutiveSummary from '@/components/dashboard/ExecutiveSummary'
 import { calculateQualityScore } from '@/lib/analytics/quality-score'
 import { generateSmartAlerts } from '@/lib/analytics/alerts'
 
@@ -200,17 +201,11 @@ export default function DashboardPage() {
 
       {/* ── ROW 2: Executive Summary & Alert Panel ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 bg-bg-card border border-border rounded-xl p-5 flex flex-col justify-center min-h-[160px]">
-          <div className="flex items-center gap-2 mb-3">
-            <FileText size={18} className="text-accent" />
-            <h3 className="font-semibold text-text">Executive Summary</h3>
-          </div>
-          <p className="text-sm text-text-muted leading-relaxed">
-            {fetchedDataset?.name 
-              ? `Analysis for ${fetchedDataset.name} (Grade ${quality.grade}). The dataset contains ${fmt(rows.length)} records across ${headers.length} dimensions. The primary category '${cat0}' shows notable distribution patterns across the main metric '${num0}'.` 
-              : 'Generating executive summary placeholder...'}
-          </p>
-        </div>
+        <ExecutiveSummary
+          datasetId={activeDatasetId}
+          rowCount={rows.length}
+          className="lg:col-span-2"
+        />
         <div className="lg:col-span-1 min-h-[160px]">
           <AlertPanel alerts={alerts} isLoading={datasetLoading} />
         </div>
