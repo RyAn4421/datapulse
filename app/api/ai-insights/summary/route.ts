@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
     '---',
     promptRows
       .map((row) =>
-        dataset.headers.map((h: string) => String(row[h] ?? '')).join(' | ')
+        dataset.headers.map((h: string) => String(row[h] ?? '').substring(0, 100)).join(' | ')
       )
       .join('\n'),
   ].join('\n')
@@ -128,6 +128,7 @@ Rules:
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 450,
         temperature: 0.35,
+        response_format: { type: 'json_object' },
       }),
       signal: controller.signal,
     })
@@ -137,16 +138,21 @@ Rules:
     if (!groqRes.ok) {
       const errText = await groqRes.text()
       console.error('[Summary] Groq API error:', errText)
-      return NextResponse.json({ error: 'generation_failed' }, { status: 502 })
+      return NextResponse.json({ error: 'groq_api_error' }, { status: 502 })
     }
 
     const groqData = await groqRes.json()
     const rawText: string = groqData.choices?.[0]?.message?.content ?? ''
-    const cleanText = rawText.replace(/```json|```/g, '').trim()
 
     // ── JSON parse ───────────────────────────────────────────────────────────
     let summary: any
     try {
+      const firstBrace = rawText.indexOf('{')
+      const lastBrace = rawText.lastIndexOf('}')
+      if (firstBrace === -1 || lastBrace === -1 || lastBrace < firstBrace) {
+        throw new Error('No JSON object found')
+      }
+      const cleanText = rawText.substring(firstBrace, lastBrace + 1)
       summary = JSON.parse(cleanText)
     } catch {
       console.error('[Summary] Malformed JSON from LLM:', rawText)
@@ -186,9 +192,9 @@ Rules:
         console.log('[Summary] Serving stale cache after timeout — dataset:', datasetId)
         return NextResponse.json({ summary: dataset.aiSummary, cached: true, stale: true })
       }
-      return NextResponse.json({ error: 'timeout' }, { status: 504 })
+      return NextResponse.json({ error: 'groq_timeout' }, { status: 504 })
     }
     console.error('[Summary] Unexpected error:', err)
-    return NextResponse.json({ error: 'generation_failed' }, { status: 500 })
+    return NextResponse.json({ error: 'groq_api_error' }, { status: 500 })
   }
 }
