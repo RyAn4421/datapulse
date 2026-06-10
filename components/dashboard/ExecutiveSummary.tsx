@@ -12,6 +12,7 @@ export interface ExecutiveSummaryData {
   topCategory: string
   risk: string
   recommendation: string
+  opportunities: string
 }
 
 export interface ExecutiveSummaryProps {
@@ -39,6 +40,7 @@ const SECTIONS: {
   { key: 'overview',       label: 'Overview',       color: '#6366F1' },
   { key: 'topCategory',    label: 'Key Finding',    color: '#10B981' },
   { key: 'risk',           label: 'Risk',           color: '#F59E0B' },
+  { key: 'opportunities',  label: 'Opportunities',  color: '#A855F7' },
   { key: 'recommendation', label: 'Recommendation', color: '#22D3EE' },
 ]
 
@@ -178,8 +180,8 @@ export default function ExecutiveSummary({
         )}
       </div>
 
-      {/* 2×2 section grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {/* 2×3 section grid (adapted to fit 5 sections gracefully) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
         <AnimatePresence mode="wait">
           {SECTIONS.map(({ key, label, color }, i) => (
             <motion.div
@@ -259,8 +261,8 @@ function Skeleton({ className = '' }: { className?: string }) {
         <div className="h-3.5 bg-bg-hover rounded w-32 animate-pulse" />
       </div>
       <p className="text-xs text-text-muted mb-4 animate-pulse">Generating insights…</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {[...Array(4)].map((_, i) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+        {[...Array(5)].map((_, i) => (
           <div
             key={i}
             className="p-3 rounded-lg border border-border/60 bg-bg-hover/30 space-y-2 animate-pulse"

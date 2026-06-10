@@ -5,6 +5,7 @@ export interface IExecutiveSummary {
   topCategory: string;
   risk: string;
   recommendation: string;
+  opportunities: string;
 }
 
 export interface IDataset extends Document {
@@ -45,6 +46,7 @@ const DatasetSchema = new Schema<IDataset>({
     topCategory:    { type: String },
     risk:           { type: String },
     recommendation: { type: String },
+    opportunities:  { type: String },
   },
   summaryHash:        { type: String },
   summaryGeneratedAt: { type: Date },

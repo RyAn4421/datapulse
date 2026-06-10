@@ -104,11 +104,12 @@ Return ONLY a valid JSON object with exactly this structure — no markdown, no 
   "overview":       "One sentence summarising the dataset purpose and scale. Max 50 words.",
   "topCategory":    "The single most significant category or segment finding. Max 30 words.",
   "risk":           "The most important data or business risk identified. Max 40 words.",
+  "opportunities":  "One or two specific opportunities for improvement or growth based on the data. Max 40 words.",
   "recommendation": "One specific, actionable recommendation. Reference actual column names and values from the data. Max 40 words."
 }
 
 Rules:
-- Total word count across all four fields must not exceed 200 words.
+- Total word count across all five fields must not exceed 250 words.
 - Return only valid JSON. No preamble. No trailing text.
 - Make the recommendation specific and actionable — not generic. Weak: "Review your data." Strong: "Marketing spend is 2.3x above average. Rebalance budget toward lower-cost, higher-ROI categories before Q3."`
 
@@ -159,8 +160,8 @@ Rules:
       return NextResponse.json({ error: 'malformed_response' }, { status: 502 })
     }
 
-    // ── Validate all 4 required keys ─────────────────────────────────────────
-    const REQUIRED_KEYS = ['overview', 'topCategory', 'risk', 'recommendation'] as const
+    // ── Validate all 5 required keys ─────────────────────────────────────────
+    const REQUIRED_KEYS = ['overview', 'topCategory', 'risk', 'recommendation', 'opportunities'] as const
     const missingKeys = REQUIRED_KEYS.filter(
       (k) => !summary[k] || typeof summary[k] !== 'string'
     )
@@ -176,6 +177,7 @@ Rules:
         topCategory:    summary.topCategory,
         risk:           summary.risk,
         recommendation: summary.recommendation,
+        opportunities:  summary.opportunities,
       },
       summaryHash:        currentHash,
       summaryGeneratedAt: new Date(),
