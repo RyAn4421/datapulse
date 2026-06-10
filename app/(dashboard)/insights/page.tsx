@@ -218,10 +218,10 @@ export default function InsightsPage() {
               <h3 className="text-sm font-semibold text-text mb-3">{col} Values</h3>
               <ResponsiveContainer width="100%" height={160}>
                 <BarChart data={data}>
-                  <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="3 3" vertical={false} />
+                  <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="name" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, color: 'var(--text)' }} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+                  <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, color: 'var(--text)' }} cursor={{ fill: 'var(--bg-hover)' }} />
                   <Bar dataKey="value" fill="#6366F1" radius={[4,4,0,0]} isAnimationActive animationDuration={700} />
                 </BarChart>
               </ResponsiveContainer>

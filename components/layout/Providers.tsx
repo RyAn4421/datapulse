@@ -7,6 +7,8 @@ import { useStore } from '@/lib/store';
 export default function Providers({ children }: { children: React.ReactNode }) {
     const setTheme = useStore((state) => state.setTheme);
 
+    const theme = useStore((state) => state.theme);
+
     useEffect(() => {
         const saved = (localStorage.getItem('datapulse-theme') || 'dark') as 'dark' | 'light';
         document.documentElement.setAttribute('data-theme', saved);
@@ -18,11 +20,12 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             {children}
             <Toaster
                 position="bottom-right"
+                theme={theme}
                 toastOptions={{
                     style: {
-                        background: '#111113',
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        color: '#FAFAFA',
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--border)',
+                        color: 'var(--text)',
                         fontFamily: 'var(--font-sans)',
                         fontSize: '13px',
                         borderRadius: '10px',

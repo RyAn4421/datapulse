@@ -1,8 +1,9 @@
 'use client';
 import { useStore } from '@/lib/store';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, Database, BarChart3, Search, Lightbulb, LogOut, Loader2, Sparkles, FileText, GitCompare, Users } from 'lucide-react';
+import { LayoutDashboard, Database, BarChart3, Search, Lightbulb, LogOut, Loader2, Sparkles, FileText, GitCompare, Users, History } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import { cn } from '@/lib/utils';
@@ -19,7 +20,8 @@ const navItems = [
     { label: 'AI Insights', icon: Sparkles, href: '/smart-insights' },
     { label: 'Compare', icon: GitCompare, href: '/compare' },
     { label: 'Report', icon: FileText, href: '/report' },
-    { section: 'TEAM' },
+    { section: 'TEAM & HISTORY' },
+    { label: 'Activity Log', icon: History, href: '/activity', id: 'activity-nav' },
     { label: 'Workspace', icon: Users, href: '/workspace' },
 ];
 
@@ -41,11 +43,11 @@ export default function Sidebar() {
         <motion.aside
             initial={false}
             animate={{ width: isSidebarOpen ? 224 : 56 }}
-            className="hidden md:flex flex-col h-screen bg-void-900 border-r border-void-500/30 shrink-0 overflow-hidden"
+            className="hidden md:flex flex-col h-screen bg-bg-card border-r border-border shrink-0 overflow-hidden"
         >
-            <div className="flex items-center h-16 px-3 border-b border-void-500/20 shrink-0">
-                <div className="w-8 h-8 rounded-lg bg-iris-500 flex items-center justify-center font-serif text-lg font-bold text-white shrink-0">
-                    DP
+            <div className="flex items-center h-16 px-3 border-b border-border shrink-0">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0">
+                    <Image src="/logo/datapulse-logo.png" alt="DataPulse" width={32} height={32} className="object-contain" />
                 </div>
                 <AnimatePresence>
                     {isSidebarOpen && (
@@ -53,7 +55,7 @@ export default function Sidebar() {
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -10 }}
-                            className="ml-3 font-serif text-xl tracking-wide whitespace-nowrap overflow-hidden text-ellipsis text-ink-100"
+                            className="ml-3 font-serif text-xl tracking-wide whitespace-nowrap overflow-hidden text-ellipsis text-text"
                         >
                             DataPulse
                         </motion.span>
@@ -68,7 +70,7 @@ export default function Sidebar() {
                             return (
                                 <li key={index} className="mt-4 first:mt-0 mb-1">
                                     {isSidebarOpen ? (
-                                        <span className="px-2 text-[10px] font-mono tracking-wider text-ink-300">
+                                        <span className="px-2 text-[10px] font-mono tracking-wider text-text-subtle">
                                             {item.section}
                                         </span>
                                     ) : (
@@ -85,15 +87,16 @@ export default function Sidebar() {
                             <li key={index}>
                                 <Link
                                     href={item.href!}
+                                    id={item.id}
                                     className={cn(
                                         "flex items-center h-[34px] px-2 rounded-lg text-sm font-medium transition-colors group relative",
                                         isActive 
-                                            ? "bg-void-700 text-ink-100 border-l-2 border-iris-500" 
-                                            : "text-ink-200 hover:bg-void-700/50 hover:text-ink-100"
+                                            ? "bg-bg-hover text-text border-l-2 border-accent" 
+                                            : "text-text-muted hover:bg-bg-hover/50 hover:text-text"
                                     )}
                                     title={!isSidebarOpen ? item.label : undefined}
                                 >
-                                    <Icon className={cn("w-4 h-4 shrink-0", isActive ? "text-iris-400" : "text-ink-300 group-hover:text-iris-400")} />
+                                    <Icon className={cn("w-4 h-4 shrink-0", isActive ? "text-accent" : "text-text-muted group-hover:text-accent")} />
                                     
                                     <AnimatePresence>
                                         {isSidebarOpen && (
@@ -124,7 +127,7 @@ export default function Sidebar() {
                             >
                                 <ul className="flex flex-col gap-1">
                                     <li className="mt-4 mb-1">
-                                        <span className="px-2 text-[10px] font-mono tracking-wider text-ink-300">
+                                        <span className="px-2 text-[10px] font-mono tracking-wider text-text-subtle">
                                             DATASETS
                                         </span>
                                     </li>
@@ -142,8 +145,8 @@ export default function Sidebar() {
                                                     className={cn(
                                                         "flex items-center w-full h-[34px] px-2 rounded-lg text-sm font-medium transition-colors group relative",
                                                         isActive 
-                                                            ? "bg-void-700 text-ink-100 border-l-2 border-iris-500" 
-                                                            : "text-ink-200 hover:bg-void-700/50 hover:text-ink-100"
+                                                            ? "bg-bg-hover text-text border-l-2 border-accent" 
+                                                            : "text-text-muted hover:bg-bg-hover/50 hover:text-text"
                                                     )}
                                                 >
                                                     <div 
@@ -163,7 +166,7 @@ export default function Sidebar() {
                                     <li>
                                         <button
                                             onClick={() => router.push('/import')}
-                                            className="flex items-center w-full h-[34px] px-2 text-xs font-mono text-iris-400 hover:text-iris-350 transition-colors text-left"
+                                            className="flex items-center w-full h-[34px] px-2 text-xs font-mono text-accent hover:text-accent-hover transition-colors text-left"
                                         >
                                             + Import Data
                                         </button>
@@ -175,16 +178,16 @@ export default function Sidebar() {
                 </ul>
             </nav>
 
-            <div className="p-3 border-t border-void-500/20 shrink-0">
+            <div className="p-3 border-t border-border shrink-0">
                 <div className={cn("flex items-center", isSidebarOpen ? "justify-between" : "justify-center")}>
                     <div className="flex items-center gap-2 overflow-hidden">
-                        <div className="w-8 h-8 rounded-full bg-void-700 border border-void-500 flex items-center justify-center text-xs font-bold text-ink-100 shrink-0 uppercase">
-                            {session?.user?.name?.charAt(0) || <Loader2 className="w-3.5 h-3.5 animate-spin text-iris-400"/>}
+                        <div className="w-8 h-8 rounded-full bg-bg-hover border border-border flex items-center justify-center text-xs font-bold text-text shrink-0 uppercase">
+                            {session?.user?.name?.charAt(0) || <Loader2 className="w-3.5 h-3.5 animate-spin text-accent"/>}
                         </div>
                         {isSidebarOpen && (
                             <div className="flex flex-col overflow-hidden">
-                                <span className="text-sm font-medium text-ink-100 truncate">{session?.user?.name || 'User'}</span>
-                                <span className="text-xs text-ink-300 truncate capitalize">{(session?.user as any)?.role || 'admin'}</span>
+                                <span className="text-sm font-medium text-text truncate">{session?.user?.name || 'User'}</span>
+                                <span className="text-xs text-text-muted truncate capitalize">{(session?.user as any)?.role || 'admin'}</span>
                             </div>
                         )}
                     </div>
@@ -192,7 +195,7 @@ export default function Sidebar() {
                 {isSidebarOpen && (
                     <button 
                         onClick={() => signOut({ callbackUrl: '/login'})}
-                        className="mt-3 w-full flex items-center justify-center gap-2 h-[34px] rounded-lg bg-void-700 hover:bg-void-600 border border-void-500 text-ink-200 text-sm transition-colors"
+                        className="mt-3 w-full flex items-center justify-center gap-2 h-[34px] rounded-lg bg-bg hover:bg-bg-hover border border-border text-text-muted hover:text-text text-sm transition-colors"
                     >
                         <LogOut className="w-4 h-4" />
                         Sign Out
@@ -201,7 +204,7 @@ export default function Sidebar() {
                 {!isSidebarOpen && (
                     <button 
                          onClick={() => signOut({ callbackUrl: '/login'})}
-                         className="mt-3 w-full flex items-center justify-center h-[34px] rounded-lg hover:bg-void-700 text-ink-200"
+                         className="mt-3 w-full flex items-center justify-center h-[34px] rounded-lg hover:bg-bg-hover text-text-muted hover:text-text transition-colors"
                          title="Sign Out"
                     >
                         <LogOut className="w-4 h-4" />

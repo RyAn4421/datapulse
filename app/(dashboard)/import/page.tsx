@@ -7,6 +7,7 @@ import { DatasetList } from '@/components/datasets/DatasetList';
 import { UploadZone } from '@/components/datasets/UploadZone';
 import { useDatasets } from '@/hooks/useDataset';
 import { useStore } from '@/lib/store';
+import SampleGallery from '@/components/import/SampleGallery';
 import type { DataRow } from '@/lib/utils';
 
 interface ParsedUpload {
@@ -85,6 +86,11 @@ export default function ImportPage() {
 
             <section>
                 <DatasetList />
+            </section>
+
+            {/* Sample Dataset Gallery */}
+            <section id="sample-datasets-section">
+                <SampleGallery />
             </section>
 
             <section className="space-y-4">

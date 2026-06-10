@@ -1,0 +1,65 @@
+{
+  "name": "Marketing Campaign Analytics",
+  "description": "Digital marketing campaign performance across channels and segments",
+  "headers": ["Campaign","Channel","Segment","Impressions","Clicks","Conversions","Spend","Revenue"],
+  "rows": [
+    {"Campaign":"Spring Launch","Channel":"Search","Segment":"Enterprise","Impressions":125000,"Clicks":3750,"Conversions":188,"Spend":9500,"Revenue":56400},
+    {"Campaign":"Spring Launch","Channel":"Social","Segment":"SMB","Impressions":340000,"Clicks":6800,"Conversions":204,"Spend":7200,"Revenue":30600},
+    {"Campaign":"Spring Launch","Channel":"Display","Segment":"Consumer","Impressions":890000,"Clicks":4450,"Conversions":89,"Spend":5300,"Revenue":13350},
+    {"Campaign":"Spring Launch","Channel":"Email","Segment":"Enterprise","Impressions":45000,"Clicks":5400,"Conversions":324,"Spend":1800,"Revenue":97200},
+    {"Campaign":"Summer Promo","Channel":"Search","Segment":"SMB","Impressions":98000,"Clicks":2940,"Conversions":147,"Spend":8200,"Revenue":44100},
+    {"Campaign":"Summer Promo","Channel":"Social","Segment":"Consumer","Impressions":520000,"Clicks":10400,"Conversions":312,"Spend":11000,"Revenue":46800},
+    {"Campaign":"Summer Promo","Channel":"Email","Segment":"SMB","Impressions":62000,"Clicks":7440,"Conversions":446,"Spend":2500,"Revenue":133800},
+    {"Campaign":"Summer Promo","Channel":"Video","Segment":"Enterprise","Impressions":240000,"Clicks":4800,"Conversions":144,"Spend":18000,"Revenue":86400},
+    {"Campaign":"Back to School","Channel":"Search","Segment":"Consumer","Impressions":180000,"Clicks":5400,"Conversions":270,"Spend":12000,"Revenue":40500},
+    {"Campaign":"Back to School","Channel":"Social","Segment":"Enterprise","Impressions":95000,"Clicks":1900,"Conversions":95,"Spend":6500,"Revenue":47500},
+    {"Campaign":"Back to School","Channel":"Display","Segment":"SMB","Impressions":650000,"Clicks":3250,"Conversions":65,"Spend":4200,"Revenue":9750},
+    {"Campaign":"Back to School","Channel":"Email","Segment":"Consumer","Impressions":38000,"Clicks":4560,"Conversions":274,"Spend":1400,"Revenue":41100},
+    {"Campaign":"Q4 Holiday","Channel":"Search","Segment":"Enterprise","Impressions":210000,"Clicks":6300,"Conversions":378,"Spend":19000,"Revenue":113400},
+    {"Campaign":"Q4 Holiday","Channel":"Social","Segment":"Consumer","Impressions":780000,"Clicks":15600,"Conversions":624,"Spend":22000,"Revenue":93600},
+    {"Campaign":"Q4 Holiday","Channel":"Video","Segment":"SMB","Impressions":310000,"Clicks":6200,"Conversions":248,"Spend":25000,"Revenue":124000},
+    {"Campaign":"Q4 Holiday","Channel":"Email","Segment":"Enterprise","Impressions":55000,"Clicks":6600,"Conversions":528,"Spend":2200,"Revenue":158400},
+    {"Campaign":"New Year Reset","Channel":"Search","Segment":"SMB","Impressions":75000,"Clicks":2250,"Conversions":113,"Spend":6800,"Revenue":33900},
+    {"Campaign":"New Year Reset","Channel":"Social","Segment":"Consumer","Impressions":290000,"Clicks":5800,"Conversions":232,"Spend":9500,"Revenue":34800},
+    {"Campaign":"New Year Reset","Channel":"Email","Segment":"SMB","Impressions":42000,"Clicks":5040,"Conversions":302,"Spend":1600,"Revenue":90600},
+    {"Campaign":"Product Awareness","Channel":"Display","Segment":"Enterprise","Impressions":1200000,"Clicks":6000,"Conversions":120,"Spend":8500,"Revenue":36000},
+    {"Campaign":"Product Awareness","Channel":"Video","Segment":"Consumer","Impressions":450000,"Clicks":9000,"Conversions":270,"Spend":31000,"Revenue":40500},
+    {"Campaign":"Product Awareness","Channel":"Social","Segment":"SMB","Impressions":380000,"Clicks":7600,"Conversions":380,"Spend":13500,"Revenue":57000},
+    {"Campaign":"Retargeting","Channel":"Display","Segment":"Enterprise","Impressions":88000,"Clicks":2640,"Conversions":264,"Spend":4400,"Revenue":79200},
+    {"Campaign":"Retargeting","Channel":"Social","Segment":"Consumer","Impressions":145000,"Clicks":4350,"Conversions":435,"Spend":7800,"Revenue":65250},
+    {"Campaign":"Retargeting","Channel":"Search","Segment":"SMB","Impressions":42000,"Clicks":1680,"Conversions":168,"Spend":5600,"Revenue":50400}
+  ],
+  "executiveSummary": {
+    "overview": "25 campaigns across 6 channels generated $1.47M total revenue on $242K spend — a blended 6.1x ROAS. Email continues to be the most cost-efficient channel despite lower impression volume.",
+    "topCategory": "Email channel achieved an average ROAS of 54x across all segments, far exceeding Search (5.4x), Social (4.8x), and Display (2.5x). Enterprise segment consistently returned the highest revenue per conversion.",
+    "risk": "Display advertising shows declining efficiency with $4-8 CPM yielding only 0.5% CTR and 2% conversion rates. Video campaigns require significant spend ($25-31K) with modest ROAS of 3-5x.",
+    "opportunities": "Retargeting campaigns show 10-16% conversion rates versus 3-5% for prospecting — increasing retargeting budget allocation could improve blended ROAS by an estimated 18-25%.",
+    "recommendation": "Shift 20% of Display budget to Email and Retargeting. Pilot Enterprise-focused Email sequences for Q4 Holiday — historical data shows 528 conversions on 6,600 clicks for this combination."
+  },
+  "smartAlerts": [
+    {"id":"alert-outlier-Impressions","type":"outlier","title":"Impression Outlier Detected","description":"Product Awareness Display generated 1.2M impressions — 8.3x above average. Verify budget allocation.","severity":"Medium"},
+    {"id":"alert-dominance-Channel","type":"category_dominance","title":"Channel Dominance","description":"Email represents best ROAS at 54x — significantly outpacing all other channels.","severity":"Medium"}
+  ],
+  "aiInsights": [
+    {"id":"ins-1","text":"Email campaigns achieve 54x ROAS on average, making them the highest-leverage channel in the marketing mix.","confidence":"High","priority":"HIGH","category":"performance"},
+    {"id":"ins-2","text":"Enterprise segment generates 2.3x revenue per conversion compared to Consumer — premium audience worth deeper investment.","confidence":"High","priority":"HIGH","category":"opportunity"},
+    {"id":"ins-3","text":"Display advertising CTR of 0.5% signals potential audience fatigue or creative staleness — A/B testing new creatives is recommended.","confidence":"Medium","priority":"MEDIUM","category":"risk"},
+    {"id":"ins-4","text":"Q4 Holiday campaigns generated the highest absolute revenue across all channels — planning should begin 6 weeks earlier next cycle.","confidence":"High","priority":"HIGH","category":"trend"},
+    {"id":"ins-5","text":"Retargeting conversion rates (10-16%) outperform prospecting by 3-4x — increasing retargeting budget allocation is a low-risk growth lever.","confidence":"High","priority":"HIGH","category":"opportunity"}
+  ],
+  "reportData": {
+    "rowCount": 25,
+    "colCount": 8,
+    "totalValue": 1473450,
+    "avgValue": 58938,
+    "numColName": "Revenue",
+    "catColName": "Channel",
+    "charts": [
+      {"name":"Search","value":288300},
+      {"name":"Social","value":328050},
+      {"name":"Email","value":475100},
+      {"name":"Display","value":59100},
+      {"name":"Video","value":250900}
+    ]
+  }
+}

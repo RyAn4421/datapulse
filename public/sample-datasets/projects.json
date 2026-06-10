@@ -1,0 +1,61 @@
+{
+  "name": "Project Portfolio Tracker",
+  "description": "Cross-department project status, budget, and delivery metrics",
+  "headers": ["Project","Department","Status","Priority","Budget","Spent","Progress","Owner","Deadline"],
+  "rows": [
+    {"Project":"CRM Overhaul","Department":"Sales","Status":"In Progress","Priority":"High","Budget":280000,"Spent":195000,"Progress":72,"Owner":"Beth P","Deadline":"Q2 2025"},
+    {"Project":"Data Platform Upgrade","Department":"Engineering","Status":"In Progress","Priority":"Critical","Budget":450000,"Spent":380000,"Progress":88,"Owner":"Alex T","Deadline":"Q1 2025"},
+    {"Project":"Brand Refresh","Department":"Marketing","Status":"Completed","Priority":"Medium","Budget":95000,"Spent":91200,"Progress":100,"Owner":"Carol S","Deadline":"Q4 2024"},
+    {"Project":"ERP Migration","Department":"Finance","Status":"Planning","Priority":"High","Budget":620000,"Spent":45000,"Progress":12,"Owner":"David L","Deadline":"Q4 2025"},
+    {"Project":"Office Expansion","Department":"Operations","Status":"In Progress","Priority":"Medium","Budget":340000,"Spent":168000,"Progress":51,"Owner":"Frank O","Deadline":"Q3 2025"},
+    {"Project":"AI Hiring Tool","Department":"HR","Status":"In Progress","Priority":"High","Budget":185000,"Spent":92000,"Progress":55,"Owner":"Eva M","Deadline":"Q2 2025"},
+    {"Project":"Mobile App v2","Department":"Engineering","Status":"In Progress","Priority":"Critical","Budget":520000,"Spent":495000,"Progress":94,"Owner":"Alex T","Deadline":"Q1 2025"},
+    {"Project":"Customer Portal","Department":"Sales","Status":"Completed","Priority":"High","Budget":210000,"Spent":205000,"Progress":100,"Owner":"Beth P","Deadline":"Q4 2024"},
+    {"Project":"Content Hub","Department":"Marketing","Status":"In Progress","Priority":"Low","Budget":72000,"Spent":28000,"Progress":38,"Owner":"Carol S","Deadline":"Q3 2025"},
+    {"Project":"SOC 2 Compliance","Department":"Engineering","Status":"In Progress","Priority":"Critical","Budget":380000,"Spent":290000,"Progress":78,"Owner":"Alex T","Deadline":"Q2 2025"},
+    {"Project":"Payroll System","Department":"Finance","Status":"Completed","Priority":"High","Budget":145000,"Spent":138000,"Progress":100,"Owner":"David L","Deadline":"Q4 2024"},
+    {"Project":"Facilities Automation","Department":"Operations","Status":"Planning","Priority":"Low","Budget":85000,"Spent":8000,"Progress":8,"Owner":"Frank O","Deadline":"Q4 2025"},
+    {"Project":"Learning Platform","Department":"HR","Status":"Completed","Priority":"Medium","Budget":95000,"Spent":88500,"Progress":100,"Owner":"Eva M","Deadline":"Q4 2024"},
+    {"Project":"API Gateway","Department":"Engineering","Status":"In Progress","Priority":"High","Budget":220000,"Spent":178000,"Progress":82,"Owner":"Alex T","Deadline":"Q2 2025"},
+    {"Project":"Sales Enablement","Department":"Sales","Status":"In Progress","Priority":"Medium","Budget":160000,"Spent":98000,"Progress":61,"Owner":"Beth P","Deadline":"Q3 2025"},
+    {"Project":"Analytics Dashboard","Department":"Marketing","Status":"Completed","Priority":"High","Budget":135000,"Spent":131000,"Progress":100,"Owner":"Carol S","Deadline":"Q4 2024"},
+    {"Project":"Treasury Management","Department":"Finance","Status":"In Progress","Priority":"Medium","Budget":210000,"Spent":88000,"Progress":42,"Owner":"David L","Deadline":"Q4 2025"},
+    {"Project":"HVAC Upgrade","Department":"Operations","Status":"Completed","Priority":"Low","Budget":48000,"Spent":46500,"Progress":100,"Owner":"Frank O","Deadline":"Q4 2024"},
+    {"Project":"Succession Planning","Department":"HR","Status":"Planning","Priority":"Medium","Budget":65000,"Spent":5000,"Progress":5,"Owner":"Eva M","Deadline":"Q3 2025"},
+    {"Project":"Security Audit","Department":"Engineering","Status":"Completed","Priority":"Critical","Budget":95000,"Spent":93000,"Progress":100,"Owner":"Alex T","Deadline":"Q4 2024"}
+  ],
+  "executiveSummary": {
+    "overview": "20 active projects across 6 departments represent $4.41M in combined budget. 7 projects are complete, 10 are in progress, and 3 are in planning. Average project completion rate is 69% against an average budget consumption of 71%.",
+    "topCategory": "Engineering carries the highest portfolio risk with 5 concurrent projects totaling $1.67M — including 3 Critical-priority items. The Mobile App v2 and Data Platform Upgrade are both over 88% spent and near completion.",
+    "risk": "ERP Migration is in early planning at only 12% complete with $620K budget — the largest single project risk if scope changes emerge. Mobile App v2 has consumed 95% of budget at 94% completion — minimal buffer remains.",
+    "opportunities": "7 completed projects achieved an average of 97% budget efficiency. Applying their delivery methodology to the 3 planning-stage projects could reduce estimated overruns by $45-80K.",
+    "recommendation": "Escalate ERP Migration planning review — at current pace, detailed design should begin immediately to protect the Q4 2025 deadline. Establish weekly checkpoints for Mobile App v2 to manage final 6% delivery risk."
+  },
+  "smartAlerts": [
+    {"id":"alert-outlier-Budget","type":"outlier","title":"Budget Outlier Detected","description":"ERP Migration at $620K is 2.8x above the average project budget — flag for portfolio review.","severity":"High"},
+    {"id":"alert-dominance-Status","type":"category_dominance","title":"Status Dominance","description":"In Progress projects represent 50% of the portfolio — monitor for delivery bottlenecks.","severity":"Medium"}
+  ],
+  "aiInsights": [
+    {"id":"ins-1","text":"Mobile App v2 has consumed 95% of its $520K budget at 94% progress — extremely thin buffer. Any scope addition will require immediate budget amendment.","confidence":"High","priority":"HIGH","category":"risk"},
+    {"id":"ins-2","text":"ERP Migration at 12% progress with 7% budget consumed is on track for planning phase, but the Q4 2025 deadline requires accelerating design phase by 6 weeks.","confidence":"High","priority":"HIGH","category":"risk"},
+    {"id":"ins-3","text":"Completed projects show strong budget discipline (avg 97% efficiency) — Engineering and Finance teams demonstrate delivery excellence worth replicating.","confidence":"High","priority":"HIGH","category":"opportunity"},
+    {"id":"ins-4","text":"3 Critical-priority Engineering projects running concurrently may cause resource contention — consider staggering delivery timelines by 4-6 weeks.","confidence":"Medium","priority":"HIGH","category":"risk"},
+    {"id":"ins-5","text":"HR projects (AI Hiring Tool, Learning Platform) show strong ROI potential — both are on track with healthy spend-to-progress ratios.","confidence":"Medium","priority":"MEDIUM","category":"opportunity"}
+  ],
+  "reportData": {
+    "rowCount": 20,
+    "colCount": 9,
+    "totalValue": 4414000,
+    "avgValue": 220700,
+    "numColName": "Budget",
+    "catColName": "Department",
+    "charts": [
+      {"name":"Engineering","value":1665000},
+      {"name":"Sales","value":650000},
+      {"name":"Marketing","value":302000},
+      {"name":"Finance","value":975000},
+      {"name":"Operations","value":473000},
+      {"name":"HR","value":345000}
+    ]
+  }
+}

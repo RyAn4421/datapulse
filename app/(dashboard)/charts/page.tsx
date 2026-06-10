@@ -46,10 +46,10 @@ const tooltipStyle = {
     fontSize: 12,
     color: 'var(--text)',
   },
-  cursor: { fill: 'rgba(255,255,255,0.03)' },
+  cursor: { fill: 'var(--bg-hover)' },
 }
 
-const gridStyle = { stroke: 'rgba(255,255,255,0.05)', strokeDasharray: '3 3' }
+const gridStyle = { stroke: 'var(--border)', strokeDasharray: '3 3' }
 const axisStyle = { fill: 'var(--text-muted)', fontSize: 11 }
 
 export default function ChartsPage() {
@@ -190,7 +190,7 @@ export default function ChartsPage() {
         return (
           <ResponsiveContainer width="100%" height="100%">
             <RadarChart data={chartData.slice(0, 8)}>
-              <PolarGrid stroke="rgba(255,255,255,0.06)" />
+              <PolarGrid stroke="var(--border)" />
               <PolarAngleAxis dataKey="name" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} />
               <Radar dataKey="value" stroke="#6366F1" fill="#6366F1" fillOpacity={0.2} {...commonProps} />
               <Tooltip {...tooltipStyle} />

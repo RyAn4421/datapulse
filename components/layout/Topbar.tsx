@@ -1,7 +1,7 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import { useStore } from '@/lib/store';
-import { PanelLeftClose, PanelLeft, Bell, Database, ChevronDown, Menu, RefreshCw } from 'lucide-react';
+import { PanelLeftClose, PanelLeft, Database, ChevronDown, Menu, RefreshCw } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useDatasets } from '@/hooks/useDataset';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -10,6 +10,7 @@ import { mutate } from 'swr';
 import { toast } from 'sonner';
 
 import { Sun, Moon } from 'lucide-react';
+import NotificationPanel from './NotificationPanel';
 
 export default function Topbar() {
     const { isSidebarOpen, setSidebarOpen, activeDatasetId, setActiveDatasetId, mobileNavOpen, setMobileNavOpen, theme, toggleTheme } = useStore();
@@ -54,7 +55,7 @@ export default function Topbar() {
     };
 
     return (
-        <header className="h-16 flex items-center justify-between px-4 lg:px-6 bg-void-950/80 backdrop-blur-xl border-b border-void-500/20 sticky top-0 z-50">
+        <header className="h-16 flex items-center justify-between px-4 lg:px-6 bg-bg/80 backdrop-blur-xl border-b border-border sticky top-0 z-50">
             <AnimatePresence>
                 {mobileNavOpen && <MobileNav />}
             </AnimatePresence>
@@ -62,19 +63,19 @@ export default function Topbar() {
                 <motion.button
                     whileTap={{ scale: 0.97 }}
                     onClick={() => setMobileNavOpen(true)}
-                    className="md:hidden p-1.5 rounded-lg text-ink-300 hover:text-ink-100 hover:bg-void-700 transition-colors"
+                    className="md:hidden p-1.5 rounded-lg text-text-muted hover:text-text hover:bg-bg-hover transition-colors"
                 >
                     <Menu className="w-5 h-5" />
                 </motion.button>
                 <motion.button
                     whileTap={{ scale: 0.97 }}
                     onClick={() => setSidebarOpen(!isSidebarOpen)}
-                    className="hidden md:inline-flex p-1.5 rounded-lg text-ink-300 hover:text-ink-100 hover:bg-void-700 transition-colors"
+                    className="hidden md:inline-flex p-1.5 rounded-lg text-text-muted hover:text-text hover:bg-bg-hover transition-colors"
                 >
                     {isSidebarOpen ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeft className="w-5 h-5" />}
                 </motion.button>
-                <div className="h-4 w-[1px] bg-void-500/50" />
-                <div className="flex items-center text-sm font-medium capitalize text-ink-100">
+                <div className="h-4 w-[1px] bg-border mx-2" />
+                <div className="flex items-center text-sm font-medium capitalize text-text">
                     {currentPage}
                 </div>
             </div>
@@ -83,24 +84,24 @@ export default function Topbar() {
                 <div className="relative" ref={dropdownRef}>
                     <button 
                         onClick={() => setDropdownOpen(!dropdownOpen)}
-                        className="flex items-center gap-2 h-9 px-3 rounded-lg bg-void-800 border border-void-500/50 hover:border-void-500 text-sm font-medium transition-all group outline-none focus:ring-2 focus:ring-iris-500/20"
+                        className="flex items-center gap-2 h-9 px-3 rounded-lg bg-bg-card border border-border hover:border-border-strong text-sm font-medium transition-all group outline-none focus:ring-2 focus:ring-iris-500/20"
                     >
                         <Database className="w-4 h-4 text-iris-400" />
-                        <span className="truncate max-w-[150px] text-ink-100">
+                        <span className="truncate max-w-[150px] text-text">
                             {isLoading ? 'Loading...' : (activeDataset ? activeDataset.name : 'No dataset selected')}
                         </span>
-                        <ChevronDown className={`w-4 h-4 text-ink-300 ml-1 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
+                        <ChevronDown className={`w-4 h-4 text-text-muted ml-1 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
 
                     {dropdownOpen && (
                         <div 
-                            className="absolute right-0 top-full mt-2 z-50 w-56 rounded-xl bg-void-800 border border-void-500 shadow-xl overflow-hidden py-1"
+                            className="absolute right-0 top-full mt-2 z-50 w-56 rounded-xl bg-bg-card border border-border shadow-xl overflow-hidden py-1"
                         >
-                            <div className="px-3 py-2 text-xs font-semibold text-ink-300">
+                            <div className="px-3 py-2 text-xs font-semibold text-text-muted">
                                 Your Datasets
                             </div>
                             {datasets?.length === 0 && (
-                                <div className="px-3 py-2 text-sm text-ink-300">No datasets found</div>
+                                <div className="px-3 py-2 text-sm text-text-muted">No datasets found</div>
                             )}
                             {datasets?.map((ds: any) => (
                                 <button
@@ -109,7 +110,7 @@ export default function Topbar() {
                                         setActiveDatasetId(ds._id);
                                         setDropdownOpen(false);
                                     }}
-                                    className="w-full text-left flex items-center px-3 py-2 text-sm text-ink-100 hover:bg-void-700 cursor-pointer outline-none transition-colors"
+                                    className="w-full text-left flex items-center px-3 py-2 text-sm text-text hover:bg-bg-hover cursor-pointer outline-none transition-colors"
                                 >
                                     {ds.name}
                                     {ds._id === activeDatasetId && (
@@ -121,13 +122,13 @@ export default function Topbar() {
                     )}
                 </div>
 
-                <div className="h-4 w-[1px] bg-void-500/50 mx-1" />
+                <div className="h-4 w-[1px] bg-border mx-1" />
 
                 {/* Refresh button */}
                 <motion.button 
                     whileTap={{ scale: 0.97 }} 
                     onClick={handleRefresh}
-                    className="p-2 rounded-lg text-ink-300 hover:text-ink-100 hover:bg-void-700 transition-colors relative"
+                    className="p-2 rounded-lg text-text-muted hover:text-text hover:bg-bg-hover transition-colors relative"
                     title="Refresh Data"
                 >
                     <RefreshCw className="w-4 h-4" />
@@ -136,19 +137,17 @@ export default function Topbar() {
                 <motion.button
                   whileTap={{ scale: 0.97 }}
                   onClick={toggleTheme}
-                  className="p-2 rounded-lg border border-transparent hover:bg-void-700 transition-colors"
+                  className="p-2 rounded-lg border border-transparent hover:bg-bg-hover transition-colors"
                   title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
                 >
                   {theme === 'dark'
-                    ? <Sun size={16} className="text-ink-300" />
-                    : <Moon size={16} className="text-ink-300" />
+                    ? <Sun size={16} className="text-text-muted" />
+                    : <Moon size={16} className="text-text-muted" />
                   }
                 </motion.button>
 
-                <motion.button whileTap={{ scale: 0.97 }} className="p-2 rounded-lg text-ink-300 hover:text-ink-100 hover:bg-void-700 transition-colors relative">
-                    <Bell className="w-4 h-4" />
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 border-2 border-void-950" />
-                </motion.button>
+                {/* Notification Center */}
+                <NotificationPanel />
             </div>
         </header>
     );

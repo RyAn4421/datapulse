@@ -1,0 +1,70 @@
+{
+  "name": "Financial Budget Tracker",
+  "description": "Departmental budget vs actuals with variance analysis",
+  "headers": ["Quarter","Department","Category","Budgeted","Actual","Variance","Status","Owner"],
+  "rows": [
+    {"Quarter":"Q1","Department":"Engineering","Category":"Salaries","Budgeted":450000,"Actual":448200,"Variance":1800,"Status":"On Track","Owner":"Alex T"},
+    {"Quarter":"Q1","Department":"Engineering","Category":"Software","Budgeted":85000,"Actual":92500,"Variance":-7500,"Status":"Over Budget","Owner":"Alex T"},
+    {"Quarter":"Q1","Department":"Engineering","Category":"Infrastructure","Budgeted":120000,"Actual":115400,"Variance":4600,"Status":"Under Budget","Owner":"Alex T"},
+    {"Quarter":"Q1","Department":"Sales","Category":"Salaries","Budgeted":380000,"Actual":381500,"Variance":-1500,"Status":"On Track","Owner":"Beth P"},
+    {"Quarter":"Q1","Department":"Sales","Category":"Travel","Budgeted":45000,"Actual":58200,"Variance":-13200,"Status":"Over Budget","Owner":"Beth P"},
+    {"Quarter":"Q1","Department":"Sales","Category":"Marketing","Budgeted":95000,"Actual":88000,"Variance":7000,"Status":"Under Budget","Owner":"Beth P"},
+    {"Quarter":"Q1","Department":"Marketing","Category":"Salaries","Budgeted":210000,"Actual":210000,"Variance":0,"Status":"On Track","Owner":"Carol S"},
+    {"Quarter":"Q1","Department":"Marketing","Category":"Campaigns","Budgeted":180000,"Actual":195000,"Variance":-15000,"Status":"Over Budget","Owner":"Carol S"},
+    {"Quarter":"Q1","Department":"Finance","Category":"Salaries","Budgeted":165000,"Actual":163800,"Variance":1200,"Status":"On Track","Owner":"David L"},
+    {"Quarter":"Q1","Department":"Operations","Category":"Facilities","Budgeted":95000,"Actual":93200,"Variance":1800,"Status":"On Track","Owner":"Frank O"},
+    {"Quarter":"Q2","Department":"Engineering","Category":"Salaries","Budgeted":455000,"Actual":462000,"Variance":-7000,"Status":"Over Budget","Owner":"Alex T"},
+    {"Quarter":"Q2","Department":"Engineering","Category":"Software","Budgeted":85000,"Actual":79500,"Variance":5500,"Status":"Under Budget","Owner":"Alex T"},
+    {"Quarter":"Q2","Department":"Engineering","Category":"Infrastructure","Budgeted":125000,"Actual":131000,"Variance":-6000,"Status":"Over Budget","Owner":"Alex T"},
+    {"Quarter":"Q2","Department":"Sales","Category":"Salaries","Budgeted":385000,"Actual":385000,"Variance":0,"Status":"On Track","Owner":"Beth P"},
+    {"Quarter":"Q2","Department":"Sales","Category":"Travel","Budgeted":48000,"Actual":72000,"Variance":-24000,"Status":"Over Budget","Owner":"Beth P"},
+    {"Quarter":"Q2","Department":"Marketing","Category":"Campaigns","Budgeted":200000,"Actual":188000,"Variance":12000,"Status":"Under Budget","Owner":"Carol S"},
+    {"Quarter":"Q2","Department":"Finance","Category":"Salaries","Budgeted":165000,"Actual":165000,"Variance":0,"Status":"On Track","Owner":"David L"},
+    {"Quarter":"Q2","Department":"Operations","Category":"Facilities","Budgeted":95000,"Actual":98500,"Variance":-3500,"Status":"Over Budget","Owner":"Frank O"},
+    {"Quarter":"Q3","Department":"Engineering","Category":"Salaries","Budgeted":462000,"Actual":458500,"Variance":3500,"Status":"On Track","Owner":"Alex T"},
+    {"Quarter":"Q3","Department":"Engineering","Category":"Infrastructure","Budgeted":130000,"Actual":142000,"Variance":-12000,"Status":"Over Budget","Owner":"Alex T"},
+    {"Quarter":"Q3","Department":"Sales","Category":"Travel","Budgeted":52000,"Actual":65000,"Variance":-13000,"Status":"Over Budget","Owner":"Beth P"},
+    {"Quarter":"Q3","Department":"Marketing","Category":"Campaigns","Budgeted":220000,"Actual":215000,"Variance":5000,"Status":"On Track","Owner":"Carol S"},
+    {"Quarter":"Q3","Department":"Finance","Category":"Salaries","Budgeted":168000,"Actual":168000,"Variance":0,"Status":"On Track","Owner":"David L"},
+    {"Quarter":"Q3","Department":"Operations","Category":"Facilities","Budgeted":98000,"Actual":95000,"Variance":3000,"Status":"Under Budget","Owner":"Frank O"},
+    {"Quarter":"Q4","Department":"Engineering","Category":"Salaries","Budgeted":470000,"Actual":481000,"Variance":-11000,"Status":"Over Budget","Owner":"Alex T"},
+    {"Quarter":"Q4","Department":"Engineering","Category":"Software","Budgeted":90000,"Actual":87200,"Variance":2800,"Status":"On Track","Owner":"Alex T"},
+    {"Quarter":"Q4","Department":"Sales","Category":"Travel","Budgeted":55000,"Actual":82000,"Variance":-27000,"Status":"Over Budget","Owner":"Beth P"},
+    {"Quarter":"Q4","Department":"Sales","Category":"Marketing","Budgeted":110000,"Actual":105000,"Variance":5000,"Status":"Under Budget","Owner":"Beth P"},
+    {"Quarter":"Q4","Department":"Marketing","Category":"Campaigns","Budgeted":250000,"Actual":268000,"Variance":-18000,"Status":"Over Budget","Owner":"Carol S"},
+    {"Quarter":"Q4","Department":"Finance","Category":"Salaries","Budgeted":170000,"Actual":170000,"Variance":0,"Status":"On Track","Owner":"David L"}
+  ],
+  "executiveSummary": {
+    "overview": "Annual departmental spend totaled $6.98M against a $6.75M budget — a 3.4% overage driven primarily by Sales Travel and Marketing Campaigns. 40% of line items finished On Track, 37% Over Budget, 23% Under Budget.",
+    "topCategory": "Sales Travel was the largest driver of budget overruns, exceeding budget by $77,200 (41%) across four quarters. Engineering Salaries also trended over budget in Q2 and Q4 due to mid-year hires.",
+    "risk": "Q4 Marketing Campaigns overspent by $18,000 (7.2%) and Sales Travel by $27,000 (49%). Cumulative Travel overruns total $77,200 — the single largest budget risk category in the organization.",
+    "opportunities": "Infrastructure spend was $13,600 under budget in Q1 and Q3 — funds that could be redirected toward engineering tooling upgrades. Finance consistently hits budget exactly, demonstrating forecast accuracy worth emulating.",
+    "recommendation": "Implement quarterly Travel budget approval gates with 85% pre-commitment triggers. Engage Sales team to shift 25% of in-person travel to video conferencing. Benchmark Finance's zero-variance forecasting approach across all departments."
+  },
+  "smartAlerts": [
+    {"id":"alert-outlier-Variance","type":"outlier","title":"Budget Outlier Detected","description":"Q4 Sales Travel variance is $27,000 over budget — 49% above allocation. Review approval process.","severity":"High"},
+    {"id":"alert-dominance-Status","type":"category_dominance","title":"Over Budget Prevalence","description":"37% of all budget line items are marked Over Budget — above acceptable threshold.","severity":"Medium"}
+  ],
+  "aiInsights": [
+    {"id":"ins-1","text":"Sales Travel overspent by $77,200 across all four quarters — a persistent pattern suggesting the travel budget model is structurally underestimated.","confidence":"High","priority":"HIGH","category":"risk"},
+    {"id":"ins-2","text":"Finance department achieved perfect budget accuracy (0% variance) in three of four quarters — their forecasting methodology should be documented and shared.","confidence":"High","priority":"HIGH","category":"opportunity"},
+    {"id":"ins-3","text":"Marketing Campaign overruns concentrated in Q1 and Q4 suggest seasonal budget mismatch — Q1/Q4 allocations should increase by 8-10%.","confidence":"Medium","priority":"MEDIUM","category":"trend"},
+    {"id":"ins-4","text":"Engineering Infrastructure costs exceeded budget in Q2 and Q3, possibly due to unplanned cloud usage spikes — tagging and alerting on cloud spend is recommended.","confidence":"Medium","priority":"MEDIUM","category":"risk"},
+    {"id":"ins-5","text":"Under-budget categories (Engineering Software in Q2, Operations Facilities in Q3) represent $25,900 in reallocation opportunity to fund higher-priority overspend areas.","confidence":"High","priority":"HIGH","category":"opportunity"}
+  ],
+  "reportData": {
+    "rowCount": 30,
+    "colCount": 8,
+    "totalValue": 6975000,
+    "avgValue": 232500,
+    "numColName": "Actual",
+    "catColName": "Department",
+    "charts": [
+      {"name":"Engineering","value":2496400},
+      {"name":"Sales","value":1836700},
+      {"name":"Marketing","value":1076000},
+      {"name":"Finance","value":666800},
+      {"name":"Operations","value":899100}
+    ]
+  }
+}

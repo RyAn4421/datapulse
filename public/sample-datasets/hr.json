@@ -1,0 +1,65 @@
+{
+  "name": "HR People Analytics",
+  "description": "Workforce data including performance, tenure, and compensation",
+  "headers": ["Department","Role","Tenure","Salary","Performance","Satisfaction","Attrition","Manager"],
+  "rows": [
+    {"Department":"Engineering","Role":"Senior Engineer","Tenure":4,"Salary":145000,"Performance":92,"Satisfaction":8,"Attrition":"No","Manager":"Alex T"},
+    {"Department":"Engineering","Role":"Junior Engineer","Tenure":1,"Salary":85000,"Performance":76,"Satisfaction":7,"Attrition":"No","Manager":"Alex T"},
+    {"Department":"Engineering","Role":"Lead Engineer","Tenure":7,"Salary":175000,"Performance":95,"Satisfaction":9,"Attrition":"No","Manager":"Alex T"},
+    {"Department":"Engineering","Role":"Junior Engineer","Tenure":2,"Salary":90000,"Performance":81,"Satisfaction":6,"Attrition":"Yes","Manager":"Alex T"},
+    {"Department":"Engineering","Role":"Senior Engineer","Tenure":5,"Salary":152000,"Performance":88,"Satisfaction":7,"Attrition":"No","Manager":"Alex T"},
+    {"Department":"Sales","Role":"Account Executive","Tenure":3,"Salary":95000,"Performance":84,"Satisfaction":7,"Attrition":"No","Manager":"Beth P"},
+    {"Department":"Sales","Role":"Sales Manager","Tenure":6,"Salary":135000,"Performance":91,"Satisfaction":8,"Attrition":"No","Manager":"Beth P"},
+    {"Department":"Sales","Role":"Account Executive","Tenure":1,"Salary":78000,"Performance":68,"Satisfaction":5,"Attrition":"Yes","Manager":"Beth P"},
+    {"Department":"Sales","Role":"SDR","Tenure":1,"Salary":62000,"Performance":72,"Satisfaction":6,"Attrition":"Yes","Manager":"Beth P"},
+    {"Department":"Sales","Role":"Account Executive","Tenure":4,"Salary":102000,"Performance":89,"Satisfaction":8,"Attrition":"No","Manager":"Beth P"},
+    {"Department":"Marketing","Role":"Marketing Manager","Tenure":5,"Salary":120000,"Performance":87,"Satisfaction":8,"Attrition":"No","Manager":"Carol S"},
+    {"Department":"Marketing","Role":"Content Specialist","Tenure":2,"Salary":72000,"Performance":80,"Satisfaction":7,"Attrition":"No","Manager":"Carol S"},
+    {"Department":"Marketing","Role":"Growth Analyst","Tenure":3,"Salary":95000,"Performance":85,"Satisfaction":7,"Attrition":"No","Manager":"Carol S"},
+    {"Department":"Marketing","Role":"Content Specialist","Tenure":1,"Salary":68000,"Performance":74,"Satisfaction":5,"Attrition":"Yes","Manager":"Carol S"},
+    {"Department":"Finance","Role":"Finance Analyst","Tenure":4,"Salary":105000,"Performance":90,"Satisfaction":8,"Attrition":"No","Manager":"David L"},
+    {"Department":"Finance","Role":"Controller","Tenure":9,"Salary":155000,"Performance":94,"Satisfaction":9,"Attrition":"No","Manager":"David L"},
+    {"Department":"Finance","Role":"Finance Analyst","Tenure":2,"Salary":98000,"Performance":82,"Satisfaction":7,"Attrition":"No","Manager":"David L"},
+    {"Department":"HR","Role":"HR Business Partner","Tenure":3,"Salary":92000,"Performance":86,"Satisfaction":8,"Attrition":"No","Manager":"Eva M"},
+    {"Department":"HR","Role":"Recruiter","Tenure":2,"Salary":78000,"Performance":79,"Satisfaction":7,"Attrition":"No","Manager":"Eva M"},
+    {"Department":"HR","Role":"Recruiter","Tenure":1,"Salary":72000,"Performance":71,"Satisfaction":5,"Attrition":"Yes","Manager":"Eva M"},
+    {"Department":"Engineering","Role":"Senior Engineer","Tenure":6,"Salary":158000,"Performance":93,"Satisfaction":9,"Attrition":"No","Manager":"Alex T"},
+    {"Department":"Engineering","Role":"Junior Engineer","Tenure":1,"Salary":82000,"Performance":77,"Satisfaction":6,"Attrition":"No","Manager":"Alex T"},
+    {"Department":"Sales","Role":"Sales Manager","Tenure":8,"Salary":145000,"Performance":96,"Satisfaction":9,"Attrition":"No","Manager":"Beth P"},
+    {"Department":"Marketing","Role":"Growth Analyst","Tenure":2,"Salary":88000,"Performance":83,"Satisfaction":7,"Attrition":"No","Manager":"Carol S"},
+    {"Department":"Finance","Role":"Finance Analyst","Tenure":3,"Salary":101000,"Performance":88,"Satisfaction":8,"Attrition":"No","Manager":"David L"}
+  ],
+  "executiveSummary": {
+    "overview": "Workforce of 25 employees across 5 departments shows average satisfaction of 7.2/10 and performance of 83.8%. Attrition rate of 24% (6 employees) is above the 15% industry benchmark and concentrated in junior roles.",
+    "topCategory": "Engineering leads in compensation (avg $128K) and performance (avg 90.5). Finance shows the highest tenure-to-satisfaction ratio. Sales Manager roles have the highest performance scores at 91-96.",
+    "risk": "6 of 25 employees (24%) indicated attrition — 5 have tenure under 2 years and satisfaction scores of 5-6/10. Junior roles are the primary attrition risk, with Sales SDR and Engineering junior engineers most affected.",
+    "opportunities": "High-performing senior employees (satisfaction 8-9) represent retention assets. Structured mentorship pairing seniors with junior staff could reduce first-year attrition by an estimated 30-40%.",
+    "recommendation": "Implement a 90-day onboarding satisfaction survey for all new hires. Review compensation for SDR role ($62K is 18% below market). Create clear career progression paths for junior engineering and sales roles."
+  },
+  "smartAlerts": [
+    {"id":"alert-dominance-Department","type":"category_dominance","title":"Department Dominance","description":"Engineering represents 32% of all records — largest single department.","severity":"Medium"},
+    {"id":"alert-quality","type":"data_quality","title":"Attrition Risk Elevated","description":"24% of employees flagged for attrition — above industry average of 15%.","severity":"Low"}
+  ],
+  "aiInsights": [
+    {"id":"ins-1","text":"Attrition is concentrated in employees with tenure under 2 years and satisfaction scores below 6 — a clear early-warning signal for targeted retention programs.","confidence":"High","priority":"HIGH","category":"risk"},
+    {"id":"ins-2","text":"Sales Manager roles show 91-96 performance scores, suggesting strong leadership — consider expanding their direct reports or territory.","confidence":"High","priority":"HIGH","category":"opportunity"},
+    {"id":"ins-3","text":"Satisfaction and performance are strongly correlated (r≈0.82) — investing in employee experience directly impacts output quality.","confidence":"High","priority":"HIGH","category":"trend"},
+    {"id":"ins-4","text":"SDR compensation at $62K is estimated 18% below market — this likely contributes to the 100% attrition rate in that role.","confidence":"Medium","priority":"HIGH","category":"risk"},
+    {"id":"ins-5","text":"Finance department shows zero attrition with average tenure of 4.7 years — studying its culture and management practices could inform company-wide retention strategy.","confidence":"Medium","priority":"MEDIUM","category":"opportunity"}
+  ],
+  "reportData": {
+    "rowCount": 25,
+    "colCount": 8,
+    "totalValue": 2627000,
+    "avgValue": 105080,
+    "numColName": "Salary",
+    "catColName": "Department",
+    "charts": [
+      {"name":"Engineering","value":887000},
+      {"name":"Sales","value":617000},
+      {"name":"Marketing","value":443000},
+      {"name":"Finance","value":459000},
+      {"name":"HR","value":242000}
+    ]
+  }
+}

@@ -1,6 +1,16 @@
 import { create } from 'zustand';
 import { Dataset, DatasetMeta } from '@/types';
 
+export interface AppNotification {
+  _id: string;
+  type: 'success' | 'info' | 'warning' | 'high';
+  title: string;
+  message: string;
+  read: boolean;
+  href?: string;
+  createdAt: string;
+}
+
 interface DashboardStore {
   // Dataset
   activeDatasetId: string | null;
@@ -38,6 +48,17 @@ interface DashboardStore {
   setChartYCol: (col: string) => void;
   setChartAggType: (agg: 'sum' | 'avg' | 'count' | 'min' | 'max') => void;
   setChartType: (type: 'bar' | 'line' | 'area' | 'pie' | 'donut' | 'radar' | 'scatter' | 'stacked' | 'horizontal' | 'arealine') => void;
+
+  // Notifications (UI cache — MongoDB is source of truth)
+  notifications: AppNotification[];
+  unreadCount: number;
+  setNotifications: (list: AppNotification[]) => void;
+  addNotification: (n: AppNotification) => void;
+  markNotificationRead: (id: string) => void;
+  markAllNotificationsRead: () => void;
+  clearNotifications: () => void;
+  notificationPanelOpen: boolean;
+  setNotificationPanelOpen: (open: boolean) => void;
 }
 
 export const useStore = create<DashboardStore>((set) => ({
@@ -90,6 +111,26 @@ export const useStore = create<DashboardStore>((set) => ({
   setChartYCol: (col) => set({ chartYCol: col }),
   setChartAggType: (agg) => set({ chartAggType: agg }),
   setChartType: (type) => set({ chartType: type }),
+
+  // Notifications
+  notifications: [],
+  unreadCount: 0,
+  setNotifications: (list) => set({ notifications: list, unreadCount: list.filter((n) => !n.read).length }),
+  addNotification: (n) => set((state) => {
+    const next = [n, ...state.notifications].slice(0, 100);
+    return { notifications: next, unreadCount: next.filter((x) => !x.read).length };
+  }),
+  markNotificationRead: (id) => set((state) => {
+    const next = state.notifications.map((n) => n._id === id ? { ...n, read: true } : n);
+    return { notifications: next, unreadCount: next.filter((x) => !x.read).length };
+  }),
+  markAllNotificationsRead: () => set((state) => ({
+    notifications: state.notifications.map((n) => ({ ...n, read: true })),
+    unreadCount: 0,
+  })),
+  clearNotifications: () => set({ notifications: [], unreadCount: 0 }),
+  notificationPanelOpen: false,
+  setNotificationPanelOpen: (open) => set({ notificationPanelOpen: open }),
 }));
 
 export const useDashboardStore = useStore;

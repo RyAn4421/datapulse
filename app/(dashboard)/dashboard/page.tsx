@@ -120,11 +120,11 @@ export default function DashboardPage() {
   const hasNoDatasets = !allDatasets || allDatasets.length === 0
 
   const COLORS = ['#6366F1', '#22D3EE', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6']
-  const gridStyle = { stroke: 'rgba(255,255,255,0.05)', strokeDasharray: '3 3' }
+  const gridStyle = { stroke: 'var(--border)', strokeDasharray: '3 3' }
   const axisStyle = { fill: 'var(--text-muted)', fontSize: 11 }
   const tooltipStyle = {
     contentStyle: { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, color: 'var(--text)' },
-    cursor: { fill: 'rgba(255,255,255,0.03)' }
+    cursor: { fill: 'var(--bg-hover)' }
   }
 
   if (!isLoading && hasNoDatasets) {

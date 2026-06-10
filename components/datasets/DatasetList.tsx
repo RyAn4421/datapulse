@@ -19,7 +19,7 @@ export function DatasetList() {
         return (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {[1, 2, 3].map(i => (
-                    <div key={i} className="h-48 bg-void-800 border border-void-600 rounded-xl animate-pulse" />
+                    <div key={i} className="h-48 bg-bg-card border border-border rounded-xl animate-pulse" />
                 ))}
             </div>
         );
@@ -27,9 +27,9 @@ export function DatasetList() {
 
     if (!datasets || datasets.length === 0) {
         return (
-            <div className="text-center py-12 border border-void-500 border-dashed rounded-xl mt-6">
-                <Database className="w-10 h-10 text-ink-300 mx-auto mb-2 opacity-40" />
-                <p className="text-ink-300 text-sm">No datasets uploaded yet.</p>
+            <div className="text-center py-12 border border-border border-dashed rounded-xl mt-6">
+                <Database className="w-10 h-10 text-text-muted mx-auto mb-2 opacity-40" />
+                <p className="text-text-muted text-sm">No datasets uploaded yet.</p>
             </div>
         );
     }
@@ -99,19 +99,29 @@ export function DatasetList() {
                             onClick={() => {
                                 if (editingId !== dataset._id) {
                                     setActiveDatasetId(dataset._id);
+                                    fetch('/api/activity', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            type: 'dataset_viewed',
+                                            label: `Viewed dataset: ${dataset.name}`,
+                                            datasetId: dataset._id,
+                                            datasetName: dataset.name
+                                        })
+                                    }).catch(() => {});
                                     router.push('/dashboard');
                                 }
                             }}
                             className={`p-5 rounded-xl border flex flex-col cursor-pointer transition-colors relative overflow-hidden group ${
-                                isActive ? 'bg-void-800 border-iris-500 shadow-[0_0_0_1px_rgba(99,102,241,0.2)]' : 'bg-void-800 border-void-500/50 hover:border-void-400'
+                                isActive ? 'bg-bg-card border-accent shadow-[0_0_0_1px_var(--accent-subtle)]' : 'bg-bg-card border-border hover:border-border-strong'
                             }`}
                         >
                              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
                              
                              <div className="flex justify-between items-start mb-4">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-lg bg-void-700 border border-void-500/50 flex items-center justify-center shrink-0">
-                                        <FileSpreadsheet className="w-5 h-5 text-ink-200" />
+                                    <div className="w-10 h-10 rounded-lg bg-bg-hover border border-border flex items-center justify-center shrink-0">
+                                        <FileSpreadsheet className="w-5 h-5 text-text-muted" />
                                     </div>
                                     <div className="flex-1" onClick={(e) => e.stopPropagation()}>
                                          {editingId === dataset._id ? (
@@ -121,19 +131,19 @@ export function DatasetList() {
                                                      value={editName}
                                                      onChange={(e) => setEditName(e.target.value)}
                                                      onBlur={(e) => handleRename(dataset._id, e)}
-                                                     className="font-serif font-medium text-ink-100 bg-void-900 border border-iris-500 rounded px-1 outline-none w-full"
+                                                     className="font-serif font-medium text-text bg-bg border border-accent rounded px-1 outline-none w-full"
                                                  />
                                              </form>
                                          ) : (
                                              <h3 
-                                                 className="font-serif font-medium text-ink-100 line-clamp-1 hover:text-iris-400 transition-colors"
+                                                 className="font-serif font-medium text-text line-clamp-1 hover:text-accent transition-colors"
                                                  onClick={(e) => startEdit(dataset._id, dataset.name, e)}
                                                  title="Click to rename"
                                              >
                                                  {dataset.name}
                                              </h3>
                                          )}
-                                         <div className="flex items-center text-xs text-ink-300 gap-2 mt-0.5 font-mono">
+                                         <div className="flex items-center text-xs text-text-muted gap-2 mt-0.5 font-mono">
                                              <span className="uppercase">{dataset.source || 'csv'}</span>
                                              <span>•</span>
                                              <span>{formatNumber(dataset.rowCount)} rows</span>
@@ -142,18 +152,18 @@ export function DatasetList() {
                                 </div>
                                 <button 
                                     onClick={(e) => handleDelete(dataset._id, e)}
-                                    className="p-1.5 text-ink-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-md transition-colors"
+                                    className="p-1.5 text-text-muted hover:text-danger hover:bg-danger/10 rounded-md transition-colors"
                                 >
                                     <Trash2 className="w-4 h-4" />
                                 </button>
                              </div>
 
-                             <div className="mt-auto flex items-center justify-between pt-4 border-t border-void-700/50">
-                                 <div className="flex items-center gap-1.5 text-xs text-ink-300 font-mono">
+                             <div className="mt-auto flex items-center justify-between pt-4 border-t border-border">
+                                 <div className="flex items-center gap-1.5 text-xs text-text-muted font-mono">
                                      <Calendar className="w-3.5 h-3.5" />
                                      <span>{new Date(dataset.createdAt).toLocaleDateString()}</span>
                                  </div>
-                                 <div className={`flex items-center gap-1 text-xs font-mono tracking-wider uppercase ${isActive ? 'text-iris-400' : 'text-ink-300 opacity-0 group-hover:opacity-100 transition-opacity'}`}>
+                                 <div className={`flex items-center gap-1 text-xs font-mono tracking-wider uppercase ${isActive ? 'text-accent' : 'text-text-muted opacity-0 group-hover:opacity-100 transition-opacity'}`}>
                                      {isActive ? 'Active' : 'Load'} <ArrowRight className="w-4 h-4" />
                                  </div>
                              </div>

@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
@@ -108,21 +109,9 @@ function LoginForm() {
                 </svg>
 
                 <div className="relative z-10 flex flex-col items-center text-center">
-                    <svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg"
-                      style={{ filter: 'drop-shadow(0 0 20px rgba(99,102,241,0.6))', marginBottom: 20, position: 'relative', zIndex: 3 }}
-                    >
-                      <rect width="72" height="72" rx="18" fill="#1a1040"/>
-                      <defs>
-                        <linearGradient id="logoGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#a78bfa"/>
-                          <stop offset="50%" stopColor="#6366F1"/>
-                          <stop offset="100%" stopColor="#22D3EE"/>
-                        </linearGradient>
-                      </defs>
-                      <path d="M12 50 L20 26 L30 44 L36 32 L42 44 L52 26 L60 50"
-                        fill="none" stroke="url(#logoGrad1)" strokeWidth="5"
-                        strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <div style={{ marginBottom: 20, position: 'relative', zIndex: 3 }}>
+                        <Image src="/logo/datapulse-logo.png" alt="DataPulse" width={72} height={72} className="object-contain" />
+                    </div>
                     <div style={{
                       fontFamily: "'Space Grotesk', sans-serif",
                       fontSize: 22, fontWeight: 700,

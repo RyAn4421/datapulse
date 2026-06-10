@@ -28,6 +28,7 @@ function fmt(n: number) {
 
 const tooltipStyle = {
   contentStyle: { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, color: 'var(--text)' },
+  cursor: { fill: 'var(--bg-hover)' },
 }
 
 export default function ComparePage() {
@@ -326,7 +327,7 @@ export default function ComparePage() {
               <h3 className="text-sm font-semibold text-text mb-4">{yCol} by {xCol} — Side by Side</h3>
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={mergedData}>
-                  <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="3 3" vertical={false} />
+                  <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="name" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
                   <Tooltip {...tooltipStyle} />
@@ -344,7 +345,7 @@ export default function ComparePage() {
               <h3 className="text-sm font-semibold text-text mb-4">{yCol} Trend Comparison</h3>
               <ResponsiveContainer width="100%" height={220}>
                 <LineChart data={mergedData}>
-                  <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="3 3" vertical={false} />
+                  <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="name" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
                   <Tooltip {...tooltipStyle} />

@@ -29,15 +29,23 @@ body {
 }
 
 [data-theme="light"] {
-  --bg: #F4F4F5;
+  --bg: #F6F8FB;
   --bg-card: #FFFFFF;
-  --bg-hover: #F1F1F3;
-  --border: rgba(0,0,0,0.08);
-  --border-strong: rgba(0,0,0,0.14);
-  --text: #09090B;
-  --text-muted: #52525B;
-  --text-subtle: #A1A1AA;
+  --bg-hover: #EEF2FF;
+  --border: #E5E7EB;
+  --border-strong: #D1D5DB;
+  --text: #111827;
+  --text-muted: #6B7280;
+  --text-subtle: #9CA3AF;
+  --accent: #6C63FF;
+  --accent-hover: #5B53EF;
+  --accent-subtle: rgba(108,99,255,0.10);
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --cyan: #22D3EE;
 }
+
 
 @media print {
   nav, .topbar, .sidebar, button { display: none !important; }

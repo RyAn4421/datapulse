@@ -161,8 +161,8 @@ export function UploadZone({ onParsed }: UploadZoneProps) {
 
     return (
         <div 
-            className={`relative w-full rounded-2xl border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center p-12 overflow-hidden
-                ${isDragging ? 'border-iris-500 bg-iris-500/5 scale-[1.01]' : 'border-void-500 bg-void-800/30 hover:border-void-400'}`}
+            className={`upload-zone relative w-full rounded-2xl border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center p-12 overflow-hidden
+                ${isDragging ? 'border-accent bg-accent/5 scale-[1.01]' : 'border-border bg-bg hover:border-border-strong'}`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
             onDragOver={handleDrag}

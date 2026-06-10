@@ -21,7 +21,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`font-sans antialiased bg-void-950 text-ink-100 min-h-screen selection:bg-iris-500/30 ${spaceGrotesk.variable}`}>
+      <body className={`font-sans antialiased min-h-screen selection:bg-iris-500/30 ${spaceGrotesk.variable}`}>
         <Providers>
           {children}
         </Providers>
