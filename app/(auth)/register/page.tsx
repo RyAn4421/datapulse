@@ -59,9 +59,9 @@ export default function RegisterPage() {
     ];
 
     return (
-        <div className="flex w-full max-w-[900px] min-h-[550px] bg-void-900 border border-void-800 shadow-2xl rounded-2xl overflow-hidden relative">
+        <div style={{ display: 'flex', width: '100%', maxWidth: 860, minHeight: 550, background: 'rgba(18,20,35,0.92)', backdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(108,71,255,0.15)', borderRadius: 20, overflow: 'hidden', position: 'relative' }}>
             {/* Left Panel */}
-            <div className="hidden md:flex flex-col relative w-1/2 p-10 justify-center overflow-hidden bg-void-950">
+            <div className="hidden md:flex flex-col relative justify-center overflow-hidden" style={{ width: '50%', flexShrink: 0, background: 'linear-gradient(160deg, rgba(8,12,36,0.98) 0%, rgba(34,211,238,0.08) 100%)', borderRight: '1px solid rgba(255,255,255,0.06)', padding: '40px 24px', gap: 16 }}>
                 {/* Animated wave background (cyan variant) */}
                 <svg
                   style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 1, opacity: 0.35 }}
@@ -96,6 +96,12 @@ export default function RegisterPage() {
                   </path>
                 </svg>
 
+                {/* Concentric ring decorations - cyan variant */}
+                <div style={{ position: 'absolute', width: 260, height: 260, borderRadius: '50%', border: '1px solid rgba(34,211,238,0.2)', top: '50%', left: '50%', transform: 'translate(-50%,-50%)' }} />
+                <div style={{ position: 'absolute', width: 180, height: 180, borderRadius: '50%', border: '1px solid rgba(34,211,238,0.12)', top: '50%', left: '50%', transform: 'translate(-50%,-50%)' }} />
+                {/* Dot grid */}
+                <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(34,211,238,0.2) 1px, transparent 1px)', backgroundSize: '28px 28px', opacity: 0.35, zIndex: 0 }} />
+
                 <div className="relative z-10 flex flex-col items-center text-center">
                     <svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg"
                       style={{ filter: 'drop-shadow(0 0 20px rgba(34,211,238,0.5))', marginBottom: 20, position: 'relative', zIndex: 3 }}
@@ -123,8 +129,8 @@ export default function RegisterPage() {
                     }}>
                         DataPulse
                     </div>
-                    <p className="text-sm text-ink-300 max-w-[200px] relative z-[3]">
-                        Your SaaS analytics, simplified and automated.
+                    <p style={{ fontSize: 11, color: 'rgba(130,220,255,0.6)', textAlign: 'center', lineHeight: 1.5, position: 'relative', zIndex: 3 }}>
+                        Your SaaS analytics,<br/>simplified and automated.
                     </p>
                 </div>
             </div>
@@ -133,7 +139,7 @@ export default function RegisterPage() {
             <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="w-full md:w-1/2 p-8 md:p-10 relative bg-void-800"
+                style={{ width: '50%', padding: '44px 40px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
             >
                 <div className="mb-6">
                     <h1 style={{

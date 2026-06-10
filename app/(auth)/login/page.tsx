@@ -1,6 +1,5 @@
 'use client';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
@@ -71,9 +70,9 @@ function LoginForm() {
     };
 
     return (
-        <div className="flex w-full max-w-[900px] min-h-[550px] bg-void-900 border border-void-800 shadow-2xl rounded-2xl overflow-hidden relative">
+        <div style={{ display: 'flex', width: '100%', maxWidth: 860, minHeight: 550, background: 'rgba(18,20,35,0.92)', backdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(108,71,255,0.15)', borderRadius: 20, overflow: 'hidden', position: 'relative' }}>
             {/* Left Panel */}
-            <div className="hidden md:flex flex-col relative w-1/2 p-10 justify-center overflow-hidden bg-void-950">
+            <div className="hidden md:flex flex-col relative justify-center overflow-hidden" style={{ width: '50%', flexShrink: 0, background: 'linear-gradient(160deg, rgba(108,71,255,0.18) 0%, rgba(58,42,140,0.12) 100%)', borderRight: '1px solid rgba(255,255,255,0.06)', padding: '40px 24px', gap: 16 }}>
                 {/* Animated wave background */}
                 <svg
                   style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 1, opacity: 0.35 }}
@@ -108,10 +107,28 @@ function LoginForm() {
                   </path>
                 </svg>
 
+                {/* Concentric ring decorations */}
+                <div style={{ position: 'absolute', width: 260, height: 260, borderRadius: '50%', border: '1px solid rgba(108,71,255,0.2)', top: '50%', left: '50%', transform: 'translate(-50%,-50%)' }} />
+                <div style={{ position: 'absolute', width: 180, height: 180, borderRadius: '50%', border: '1px solid rgba(108,71,255,0.12)', top: '50%', left: '50%', transform: 'translate(-50%,-50%)' }} />
+                {/* Dot grid */}
+                <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(108,71,255,0.25) 1px, transparent 1px)', backgroundSize: '28px 28px', opacity: 0.35, zIndex: 0 }} />
+
                 <div className="relative z-10 flex flex-col items-center text-center">
-                    <div style={{ marginBottom: 20, position: 'relative', zIndex: 3 }}>
-                        <Image src="/logo/datapulse-logo.png" alt="DataPulse" width={72} height={72} className="object-contain" />
-                    </div>
+                    <svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg"
+                      style={{ filter: 'drop-shadow(0 0 20px rgba(99,102,241,0.6))', marginBottom: 20, position: 'relative', zIndex: 3 }}
+                    >
+                      <rect width="72" height="72" rx="18" fill="#1a1040"/>
+                      <defs>
+                        <linearGradient id="logoGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#a78bfa"/>
+                          <stop offset="50%" stopColor="#6366F1"/>
+                          <stop offset="100%" stopColor="#22D3EE"/>
+                        </linearGradient>
+                      </defs>
+                      <path d="M12 50 L20 26 L30 44 L36 32 L42 44 L52 26 L60 50"
+                        fill="none" stroke="url(#logoGrad1)" strokeWidth="5"
+                        strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
                     <div style={{
                       fontFamily: "'Space Grotesk', sans-serif",
                       fontSize: 22, fontWeight: 700,
@@ -123,8 +140,8 @@ function LoginForm() {
                     }}>
                         DataPulse
                     </div>
-                    <p className="text-sm text-ink-300 max-w-[200px] relative z-[3]">
-                        Your SaaS analytics, simplified and automated.
+                    <p style={{ fontSize: 11, color: 'rgba(180,160,255,0.6)', textAlign: 'center', lineHeight: 1.5, position: 'relative', zIndex: 3 }}>
+                        Your SaaS analytics,<br/>simplified and automated.
                     </p>
                 </div>
             </div>
@@ -133,7 +150,7 @@ function LoginForm() {
             <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="w-full md:w-1/2 p-8 md:p-10 relative bg-void-800"
+                style={{ width: '50%', padding: '44px 40px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
             >
                 <div className="mb-6">
                     <h1 style={{

@@ -24,12 +24,7 @@ export default function Tour() {
       content: 'Welcome to DataPulse! Let\'s take a quick tour of your new AI-powered analytics workspace.',
       placement: 'center',
     },
-    {
-      target: '#sample-datasets-section',
-      content: 'Start instantly by loading one of our pre-built sample datasets. We have data for Sales, Marketing, HR, Finance, and more!',
-      placement: 'top',
-    },
-    {
+{
       target: '.upload-zone',
       content: 'Or upload your own CSV or Excel files here to begin analyzing your own data.',
       placement: 'top',

@@ -1,0 +1,336 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+  .page-wrap {
+    font-family: 'Inter', sans-serif;
+    min-height: 580px;
+    background: #0a0b14;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+  }
+
+  canvas#bg-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(70px);
+    opacity: 0.25;
+    pointer-events: none;
+    animation: drift 12s ease-in-out infinite alternate;
+  }
+  .orb-1 { width: 320px; height: 320px; background: #6c47ff; top: -80px; left: -60px; animation-delay: 0s; }
+  .orb-2 { width: 260px; height: 260px; background: #a855f7; bottom: -60px; right: 60px; animation-delay: -5s; }
+  .orb-3 { width: 200px; height: 200px; background: #3b5bdb; top: 50%; left: 38%; animation-delay: -3s; }
+
+  @keyframes drift {
+    from { transform: translate(0, 0) scale(1); }
+    to { transform: translate(30px, 20px) scale(1.08); }
+  }
+
+  .login-card {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    border-radius: 20px;
+    overflow: hidden;
+    width: 720px;
+    max-width: 98%;
+    background: rgba(18, 20, 35, 0.85);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(108,71,255,0.15);
+  }
+
+  .brand-panel {
+    width: 240px;
+    flex-shrink: 0;
+    background: linear-gradient(160deg, rgba(108,71,255,0.18) 0%, rgba(58,42,140,0.12) 100%);
+    border-right: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    gap: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .brand-panel::before {
+    content: '';
+    position: absolute;
+    width: 260px; height: 260px;
+    border-radius: 50%;
+    border: 1px solid rgba(108,71,255,0.2);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .brand-panel::after {
+    content: '';
+    position: absolute;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    border: 1px solid rgba(108,71,255,0.12);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .logo-box {
+    width: 52px; height: 52px;
+    background: rgba(108,71,255,0.2);
+    border-radius: 12px;
+    border: 1px solid rgba(108,71,255,0.4);
+    display: flex; align-items: center; justify-content: center;
+    position: relative; z-index: 1;
+  }
+  .logo-bars {
+    display: flex; gap: 3px; align-items: flex-end;
+  }
+  .logo-bar { width: 5px; border-radius: 2px; }
+  .lb1 { height: 14px; background: #9d7bff; }
+  .lb2 { height: 20px; background: #6c47ff; }
+  .lb3 { height: 10px; background: #b89fff; }
+
+  .brand-name {
+    font-size: 13px; font-weight: 700; letter-spacing: 3px;
+    color: #e2d9ff; text-transform: uppercase; position: relative; z-index: 1;
+  }
+  .brand-tagline {
+    font-size: 11px; color: rgba(180,160,255,0.6); text-align: center;
+    line-height: 1.5; position: relative; z-index: 1;
+  }
+
+  .grid-lines {
+    position: absolute; inset: 0; overflow: hidden; z-index: 0;
+  }
+
+  .form-panel {
+    flex: 1;
+    padding: 44px 40px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+
+  .form-eyebrow {
+    font-size: 11px; font-weight: 600; letter-spacing: 2px;
+    color: #7c6bff; text-transform: uppercase; margin-bottom: 8px;
+  }
+  .form-title {
+    font-size: 24px; font-weight: 700; color: #f0eeff;
+    line-height: 1.2; margin-bottom: 4px;
+  }
+  .form-title span { color: #9d7bff; }
+  .form-sub {
+    font-size: 13px; color: rgba(160,150,200,0.7); margin-bottom: 28px;
+  }
+
+  .field { margin-bottom: 16px; }
+  .field label {
+    display: block; font-size: 12px; font-weight: 500;
+    color: rgba(180,170,220,0.8); margin-bottom: 6px; letter-spacing: 0.5px;
+  }
+  .field-inner {
+    display: flex; align-items: center;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 10px; padding: 0 14px; height: 44px;
+    transition: border-color 0.2s, background 0.2s;
+    gap: 10px;
+  }
+  .field-inner:focus-within {
+    border-color: rgba(108,71,255,0.6);
+    background: rgba(108,71,255,0.06);
+  }
+  .field-inner i { font-size: 16px; color: rgba(140,120,200,0.6); flex-shrink: 0; }
+  .field-inner input {
+    flex: 1; background: none; border: none; outline: none;
+    font-size: 14px; color: #e2d9ff; font-family: 'Inter', sans-serif;
+  }
+  .field-inner input::placeholder { color: rgba(140,130,180,0.4); }
+
+  .forgot {
+    text-align: right; margin-top: -10px; margin-bottom: 20px;
+  }
+  .forgot a { font-size: 12px; color: #7c6bff; text-decoration: none; }
+  .forgot a:hover { color: #a890ff; }
+
+  .btn-primary {
+    width: 100%; height: 46px; border-radius: 10px; border: none; cursor: pointer;
+    background: linear-gradient(135deg, #6c47ff 0%, #9d5cff 100%);
+    color: #fff; font-size: 14px; font-weight: 600; letter-spacing: 0.3px;
+    font-family: 'Inter', sans-serif;
+    position: relative; overflow: hidden;
+    transition: opacity 0.2s, transform 0.15s;
+    margin-bottom: 14px;
+  }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-primary::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 60%);
+  }
+
+  .divider {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+  }
+  .divider-line { flex: 1; height: 1px; background: rgba(255,255,255,0.07); }
+  .divider span { font-size: 12px; color: rgba(140,130,180,0.5); }
+
+  .btn-google {
+    width: 100%; height: 44px; border-radius: 10px; cursor: pointer;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09);
+    color: #ccc5e8; font-size: 13px; font-weight: 500;
+    font-family: 'Inter', sans-serif; display: flex; align-items: center;
+    justify-content: center; gap: 10px; transition: background 0.2s;
+    margin-bottom: 20px;
+  }
+  .btn-google:hover { background: rgba(255,255,255,0.07); }
+
+  .g-icon { width: 18px; height: 18px; }
+
+  .signup-row {
+    text-align: center; font-size: 13px; color: rgba(140,130,180,0.6);
+  }
+  .signup-row a { color: #7c6bff; text-decoration: none; font-weight: 500; }
+  .signup-row a:hover { color: #a890ff; }
+
+  .dot-grid {
+    position: absolute; inset: 0;
+    background-image: radial-gradient(rgba(108,71,255,0.25) 1px, transparent 1px);
+    background-size: 28px 28px;
+    opacity: 0.35;
+  }
+</style>
+
+<div class="page-wrap" id="pageWrap">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <canvas id="bg-canvas"></canvas>
+
+  <div class="login-card">
+    <div class="brand-panel">
+      <div class="dot-grid"></div>
+      <div class="logo-box">
+        <div class="logo-bars">
+          <div class="logo-bar lb1"></div>
+          <div class="logo-bar lb2"></div>
+          <div class="logo-bar lb3"></div>
+        </div>
+      </div>
+      <div class="brand-name">DataPulse</div>
+      <div class="brand-tagline">Your SaaS analytics,<br>simplified and automated.</div>
+    </div>
+
+    <div class="form-panel">
+      <div class="form-eyebrow">Welcome back</div>
+      <div class="form-title">Sign in to your <span>account</span></div>
+      <div class="form-sub">Open your DataPulse workspace</div>
+
+      <div class="field">
+        <label>Email</label>
+        <div class="field-inner">
+          <i class="ti ti-mail" aria-hidden="true"></i>
+          <input type="email" placeholder="you@company.com" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <div class="field-inner">
+          <i class="ti ti-lock" aria-hidden="true"></i>
+          <input type="password" placeholder="••••••••" />
+        </div>
+      </div>
+
+      <div class="forgot"><a href="#">Forgot password?</a></div>
+
+      <button class="btn-primary">Sign in to DataPulse</button>
+
+      <div class="divider">
+        <div class="divider-line"></div>
+        <span>or</span>
+        <div class="divider-line"></div>
+      </div>
+
+      <button class="btn-google">
+        <svg class="g-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Continue with Google
+      </button>
+
+      <div class="signup-row">New to DataPulse? <a href="#">Create an account</a></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  const wrap = document.getElementById('pageWrap');
+
+  function resize() {
+    canvas.width = wrap.offsetWidth;
+    canvas.height = wrap.offsetHeight;
+  }
+  resize();
+
+  const particles = Array.from({length: 55}, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    vx: (Math.random() - 0.5) * 0.3,
+    vy: (Math.random() - 0.5) * 0.3,
+    r: Math.random() * 1.5 + 0.5,
+    alpha: Math.random() * 0.4 + 0.1
+  }));
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0) p.x = canvas.width;
+      if (p.x > canvas.width) p.x = 0;
+      if (p.y < 0) p.y = canvas.height;
+      if (p.y > canvas.height) p.y = 0;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(140,100,255,${p.alpha})`;
+      ctx.fill();
+
+      for (let j = i + 1; j < particles.length; j++) {
+        const q = particles[j];
+        const dx = p.x - q.x, dy = p.y - q.y;
+        const d = Math.sqrt(dx*dx + dy*dy);
+        if (d < 90) {
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(q.x, q.y);
+          ctx.strokeStyle = `rgba(108,71,255,${0.12 * (1 - d/90)})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+</script>

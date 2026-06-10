@@ -5,7 +5,6 @@ export type ActivityType =
   | 'report_generated'
   | 'chart_created'
   | 'insight_viewed'
-  | 'sample_opened'
   | 'compare_run'
   | 'share_created';
 
@@ -28,7 +27,6 @@ const ActivityLogSchema = new Schema<IActivityLog>({
       'report_generated',
       'chart_created',
       'insight_viewed',
-      'sample_opened',
       'compare_run',
       'share_created',
     ],

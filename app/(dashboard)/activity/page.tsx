@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { History, Eye, FileText, BarChart3, Lightbulb, Zap, GitCompare, Share2, Trash2, Loader2, Info } from 'lucide-react';
 import { toast } from 'sonner';
 
-type ActivityType = 'dataset_viewed' | 'report_generated' | 'chart_created' | 'insight_viewed' | 'sample_opened' | 'compare_run' | 'share_created';
+type ActivityType = 'dataset_viewed' | 'report_generated' | 'chart_created' | 'insight_viewed' | 'compare_run' | 'share_created';
 
 interface ActivityEntry {
   _id: string;
@@ -19,7 +19,6 @@ const typeConfig: Record<ActivityType, { icon: React.ElementType; color: string;
   report_generated: { icon: FileText,    color: 'text-indigo-500',bg: 'bg-indigo-500/10' },
   chart_created:    { icon: BarChart3,   color: 'text-emerald-500',bg: 'bg-emerald-500/10' },
   insight_viewed:   { icon: Lightbulb,   color: 'text-amber-500', bg: 'bg-amber-500/10' },
-  sample_opened:    { icon: Zap,         color: 'text-rose-500',  bg: 'bg-rose-500/10' },
   compare_run:      { icon: GitCompare,  color: 'text-purple-500',bg: 'bg-purple-500/10' },
   share_created:    { icon: Share2,      color: 'text-blue-500',  bg: 'bg-blue-500/10' },
 };
