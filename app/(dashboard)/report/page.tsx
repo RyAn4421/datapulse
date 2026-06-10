@@ -464,20 +464,20 @@ export default function ReportPage() {
       </div>
 
       {/* Share Management */}
-      <div className="mt-8 bg-white border border-gray-200 rounded-xl overflow-hidden print:hidden">
-        <div className="bg-gray-50 border-b border-gray-200 p-5 flex items-center justify-between">
+      <div className="mt-8 bg-bg-card border border-border rounded-xl overflow-hidden print:hidden">
+        <div className="bg-bg-hover border-b border-border p-5 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <Link2 size={18} className="text-indigo-600" /> Share Links
+            <h2 className="text-lg font-semibold text-text flex items-center gap-2">
+              <Link2 size={18} className="text-accent" /> Share Links
             </h2>
-            <p className="text-sm text-gray-500 mt-1">Manage active and revoked share links for this report.</p>
+            <p className="text-sm text-text-muted mt-1">Manage active and revoked share links for this report.</p>
           </div>
         </div>
         <div className="p-0">
           {shareData?.reports?.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
-                <thead className="bg-gray-50 text-gray-500 font-medium border-b border-gray-100">
+                <thead className="bg-bg-hover text-text-muted font-medium border-b border-border">
                   <tr>
                     <th className="px-6 py-3">Token</th>
                     <th className="px-6 py-3">Status</th>
@@ -485,32 +485,34 @@ export default function ReportPage() {
                     <th className="px-6 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-border">
                   {shareData.reports.map((r: any) => (
-                    <tr key={r.token} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 font-mono text-xs text-gray-600">
+                    <tr key={r.token} className="hover:bg-bg-hover transition-colors">
+                      <td className="px-6 py-4 font-mono text-xs text-text-muted">
                         {r.token.substring(0, 8)}...
                       </td>
                       <td className="px-6 py-4">
                         {r.revokedAt ? (
-                          <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/10">Revoked</span>
+                          <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-500/15 text-red-400 border border-red-500/30">Revoked</span>
                         ) : (
-                          <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20">Active</span>
+                          <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-500/15 text-green-400 border border-green-500/30">Active</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-gray-500">
+                      <td className="px-6 py-4 text-text-muted">
                         {new Date(r.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 text-right space-x-4">
-                        {!r.revokedAt && (
+                        {!r.revokedAt ? (
                           <>
-                            <button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/shared/${r.token}`)} className="text-indigo-600 hover:text-indigo-900 font-medium">
+                            <button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/shared/${r.token}`)} className="text-accent hover:text-accent-hover transition-colors font-medium cursor-pointer">
                               Copy Link
                             </button>
-                            <button onClick={() => handleRevoke(r.token)} className="text-rose-600 hover:text-rose-900 font-medium">
+                            <button onClick={() => handleRevoke(r.token)} className="text-danger hover:text-danger/80 transition-colors font-medium cursor-pointer">
                               Revoke
                             </button>
                           </>
+                        ) : (
+                          <span className="text-text-muted italic">Revoked</span>
                         )}
                       </td>
                     </tr>
@@ -519,7 +521,7 @@ export default function ReportPage() {
               </table>
             </div>
           ) : (
-            <div className="p-8 text-center text-gray-500">
+            <div className="p-8 text-center text-text-muted">
               No share links generated yet.
             </div>
           )}
