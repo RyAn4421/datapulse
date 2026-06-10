@@ -79,28 +79,36 @@ export async function GET(req: NextRequest) {
   console.log('[Compare AI] Cache MISS — calling Groq');
 
   // 5. Construct Prompt
+  const promptHeadersA = datasetA.headers.slice(0, 10);
+  const omittedColumnsA = datasetA.headers.length > 10 ? datasetA.headers.slice(10) : [];
   const sampleAStr = [
-    datasetA.headers.join(' | '),
+    promptHeadersA.join(' | '),
     '---',
-    rowsA.slice(0, 30).map(row => datasetA.headers.map((h: string) => String(row[h] ?? '').substring(0, 100)).join(' | ')).join('\n'),
+    rowsA.slice(0, 20).map(row => promptHeadersA.map((h: string) => String(row[h] ?? '').substring(0, 100)).join(' | ')).join('\n'),
   ].join('\n');
 
+  const promptHeadersB = datasetB.headers.slice(0, 10);
+  const omittedColumnsB = datasetB.headers.length > 10 ? datasetB.headers.slice(10) : [];
   const sampleBStr = [
-    datasetB.headers.join(' | '),
+    promptHeadersB.join(' | '),
     '---',
-    rowsB.slice(0, 30).map(row => datasetB.headers.map((h: string) => String(row[h] ?? '').substring(0, 100)).join(' | ')).join('\n'),
+    rowsB.slice(0, 20).map(row => promptHeadersB.map((h: string) => String(row[h] ?? '').substring(0, 100)).join(' | ')).join('\n'),
   ].join('\n');
 
   const prompt = `You are an expert data analyst. Compare these two datasets and generate a narrative summary.
 
 DATASET A: "${datasetA.name}"
 Rows: ${datasetA.rowCount} (Quality Score: ${metricsA.qualityScore}%, Missing: ${metricsA.missingValueRate.toFixed(1)}%, Duplicates: ${metricsA.duplicateRate.toFixed(1)}%)
-Sample Data A (first 30 rows):
+Columns included in sample: ${promptHeadersA.join(', ')}
+${omittedColumnsA.length > 0 ? `Omitted columns (due to size limits): ${omittedColumnsA.join(', ')}` : ''}
+Sample Data A (first 20 rows):
 ${sampleAStr}
 
 DATASET B: "${datasetB.name}"
 Rows: ${datasetB.rowCount} (Quality Score: ${metricsB.qualityScore}%, Missing: ${metricsB.missingValueRate.toFixed(1)}%, Duplicates: ${metricsB.duplicateRate.toFixed(1)}%)
-Sample Data B (first 30 rows):
+Columns included in sample: ${promptHeadersB.join(', ')}
+${omittedColumnsB.length > 0 ? `Omitted columns (due to size limits): ${omittedColumnsB.join(', ')}` : ''}
+Sample Data B (first 20 rows):
 ${sampleBStr}
 
 Return ONLY a valid JSON object matching this interface exactly (no markdown, no preamble):
@@ -140,8 +148,18 @@ Rules:
     clearTimeout(timeoutId);
 
     if (!groqRes.ok) {
-      console.error('[Compare AI] Groq error:', await groqRes.text());
-      return NextResponse.json({ error: 'groq_api_error' }, { status: 502 });
+      const err = await groqRes.text();
+      console.error('[Compare AI] Groq error:', err);
+      let errorMsg = 'Failed to generate comparison.';
+      try {
+        const parsedErr = JSON.parse(err);
+        errorMsg = parsedErr.error?.message || errorMsg;
+      } catch { }
+
+      if (groqRes.status === 429) {
+        return NextResponse.json({ error: errorMsg, code: 'groq_rate_limit' }, { status: 429 });
+      }
+      return NextResponse.json({ error: errorMsg, code: 'groq_api_error' }, { status: groqRes.status });
     }
 
     const groqData = await groqRes.json();
@@ -177,8 +195,8 @@ Rules:
 
   } catch (err: any) {
     if (err.name === 'AbortError') {
-      return NextResponse.json({ error: 'groq_timeout' }, { status: 504 });
+      return NextResponse.json({ error: 'Request timed out. Please try again.', code: 'groq_timeout' }, { status: 504 });
     }
-    return NextResponse.json({ error: 'groq_api_error' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to generate comparison.', code: 'groq_api_error' }, { status: 500 });
   }
 }

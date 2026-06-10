@@ -6,6 +6,7 @@ import {
   ChevronDown, ChevronUp, BarChart2, Zap
 } from 'lucide-react'
 import { useDashboardStore } from '@/lib/store'
+import { useDataset } from '@/hooks/useDataset'
 import posthog from 'posthog-js'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -47,9 +48,12 @@ const CONFIDENCE_CONFIG: Record<string, { color: string; bg: string }> = {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function SmartInsightsPage() {
-  const { activeDataset } = useDashboardStore()
+  const { activeDatasetId } = useDashboardStore()
+  const { dataset: activeDataset, isLoading: datasetLoading } = useDataset(activeDatasetId)
+  
   const [insights, setInsights] = useState<Insight[]>([])
   const [loading, setLoading] = useState(false)
+  const [cooldown, setCooldown] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [generated, setGenerated] = useState(false)
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set())
@@ -95,6 +99,8 @@ export default function SmartInsightsPage() {
       setError(e.message ?? 'Could not generate insights. Please try again.')
     } finally {
       setLoading(false)
+      setCooldown(true)
+      setTimeout(() => setCooldown(false), 1000)
     }
   }
 
@@ -103,9 +109,13 @@ export default function SmartInsightsPage() {
   if (!activeDataset) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6">
-        <Sparkles size={48} className="text-text-muted mb-4 opacity-40" />
-        <p className="text-text font-semibold mb-2">No dataset selected</p>
-        <p className="text-text-muted text-sm">Import a dataset to generate AI insights</p>
+        {datasetLoading ? (
+          <RefreshCw size={48} className="text-text-muted mb-4 opacity-40 animate-spin" />
+        ) : (
+          <Sparkles size={48} className="text-text-muted mb-4 opacity-40" />
+        )}
+        <p className="text-text font-semibold mb-2">{datasetLoading ? 'Loading dataset...' : 'No dataset selected'}</p>
+        {!datasetLoading && <p className="text-text-muted text-sm">Import a dataset to generate AI insights</p>}
       </div>
     )
   }
@@ -135,7 +145,7 @@ export default function SmartInsightsPage() {
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={generateInsights}
-          disabled={loading}
+          disabled={loading || datasetLoading || cooldown}
           className="flex items-center gap-2 bg-accent hover:bg-accent-hover text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors disabled:opacity-60"
         >
           {loading ? (

@@ -18,12 +18,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'GROQ_API_KEY not configured' }, { status: 500 })
   }
 
+  const promptHeaders = headers.slice(0, 10)
+  const omittedColumns = headers.length > 10 ? headers.slice(10) : []
+
   // Format sample data as readable table
   const sampleStr = [
-    headers.join(' | '),
+    promptHeaders.join(' | '),
     '---',
     sampleRows.slice(0, 30).map((row: Record<string, unknown>) =>
-      headers.map((h: string) => String(row[h] ?? '')).join(' | ')
+      promptHeaders.map((h: string) => String(row[h] ?? '').substring(0, 100)).join(' | ')
     ).join('\n'),
   ].join('\n')
 
@@ -31,7 +34,8 @@ export async function POST(req: NextRequest) {
 
 Dataset: "${datasetName}"
 Total rows: ${totalRows}
-Columns: ${headers.join(', ')}
+Columns included in sample: ${promptHeaders.join(', ')}
+${omittedColumns.length > 0 ? `Omitted columns (due to size limits): ${omittedColumns.join(', ')}` : ''}
 
 Sample data (first 30 rows):
 ${sampleStr}
@@ -101,7 +105,16 @@ Rules:
     if (!response.ok) {
       const err = await response.text()
       console.error('Groq API error:', err)
-      return NextResponse.json({ error: 'Groq API error' }, { status: 500 })
+      let errorMsg = 'Failed to generate insights.'
+      try {
+        const parsedErr = JSON.parse(err)
+        errorMsg = parsedErr.error?.message || errorMsg
+      } catch { }
+
+      if (response.status === 429) {
+        return NextResponse.json({ error: errorMsg, code: 'groq_rate_limit' }, { status: 429 })
+      }
+      return NextResponse.json({ error: errorMsg, code: 'groq_api_error' }, { status: response.status })
     }
 
     const data = await response.json()
@@ -145,7 +158,7 @@ Rules:
   } catch (e: any) {
     if (e.name === 'AbortError') {
       console.error('[Insights] Groq timeout (>8s)')
-      return NextResponse.json({ error: 'Request timed out. Please try again.' }, { status: 504 })
+      return NextResponse.json({ error: 'Request timed out. Please try again.', code: 'groq_timeout' }, { status: 504 })
     }
     console.error('AI insights error:', e)
     return NextResponse.json(

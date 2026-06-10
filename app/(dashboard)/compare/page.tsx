@@ -211,7 +211,7 @@ export default function ComparePage() {
               </div>
             ) : aiComparison?.error ? (
               <div className="flex items-center gap-2 text-danger text-sm bg-danger/10 p-3 rounded-lg border border-danger/20">
-                <AlertTriangle size={16} /> Failed to generate AI comparison. Please regenerate.
+                <AlertTriangle size={16} className="flex-shrink-0" /> {aiComparison.error}
               </div>
             ) : aiComparison?.summary ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
