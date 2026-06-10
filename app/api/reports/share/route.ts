@@ -137,3 +137,33 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export async function GET(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(req.url);
+  const datasetId = searchParams.get('datasetId');
+
+  if (!datasetId) {
+    return NextResponse.json({ error: 'Missing datasetId' }, { status: 400 });
+  }
+
+  const userId = (session.user as any).id || session.user.email;
+
+  try {
+    await connectDB();
+    const reports = await SharedReport.find({ ownerId: userId, datasetId })
+      .select('token createdAt revokedAt datasetName')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return NextResponse.json({ reports });
+  } catch (error) {
+    console.error('[Share API] Error fetching share links:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+

@@ -1,7 +1,7 @@
 'use client'
 import { useState, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FileText, Download, Printer, Share2, X, CheckCircle2, AlertTriangle, Presentation } from 'lucide-react'
+import { FileText, Download, Printer, Share2, X, CheckCircle2, AlertTriangle, Presentation, Link2 } from 'lucide-react'
 import { useDashboardStore } from '@/lib/store'
 import useSWR from 'swr'
 import {
@@ -9,6 +9,8 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts'
 import { prepareChartData } from '@/lib/utils'
+import { calculateQualityScore } from '@/lib/analytics/quality-score'
+import { calculateUniversalMetrics } from '@/lib/analytics/universal-metrics'
 
 function getNumericCols(rows: Record<string, unknown>[], headers: string[]): string[] {
   return headers.filter(h => rows.slice(0,20).some(r => !isNaN(Number(r[h])) && r[h] !== '' && r[h] !== null))
@@ -34,6 +36,11 @@ export default function ReportPage() {
     fetcher
   )
 
+  const { data: shareData, mutate: mutateShares } = useSWR(
+    activeDatasetId ? `/api/reports/share?datasetId=${activeDatasetId}` : null,
+    fetcher
+  )
+
   const rows = useMemo(() => activeDataset?.rows ?? [], [activeDataset])
   const headers = useMemo(() => activeDataset?.headers ?? [], [activeDataset])
   const numCols = useMemo(() => getNumericCols(rows, headers), [rows, headers])
@@ -46,6 +53,23 @@ export default function ReportPage() {
     if (!cat0 || !num0 || rows.length === 0) return []
     return prepareChartData(rows, headers, cat0, num0, 'sum').slice(0, 8)
   }, [rows, headers, cat0, num0])
+
+  const quality = useMemo(() => calculateQualityScore(rows, headers), [rows, headers])
+  const metrics = useMemo(() => calculateUniversalMetrics(activeDataset ?? {}, rows), [activeDataset, rows])
+
+  const dqChartData = useMemo(() => [
+    { name: 'Completeness', value: quality.breakdown.completeness },
+    { name: 'Consistency', value: quality.breakdown.consistency },
+    { name: 'Formatting', value: quality.breakdown.formatting },
+    { name: 'Uniqueness', value: 100 - metrics.duplicateRate },
+  ], [quality, metrics])
+
+  const cat1 = catCols.length > 1 ? catCols[1] : cat0
+  const catDistributionData = useMemo(() => {
+    if (!cat1 || rows.length === 0) return []
+    // Use the first numeric column as dummy for Y, aggregate by count
+    return prepareChartData(rows, headers, cat1, num0 || headers[0], 'count').slice(0, 6)
+  }, [rows, headers, cat1, num0])
 
   const totalValue = chartData.reduce((a, b) => a + b.value, 0)
   const avgValue = totalValue / (chartData.length || 1)
@@ -174,6 +198,16 @@ export default function ReportPage() {
 
   const copyLink = () => {
     if (shareUrl) navigator.clipboard.writeText(shareUrl)
+  }
+
+  const handleRevoke = async (token: string) => {
+    if (!confirm('Are you sure you want to revoke this share link? It will become instantly inaccessible.')) return
+    try {
+      await fetch(`/api/reports/share/${token}`, { method: 'DELETE' })
+      mutateShares()
+    } catch (err) {
+      console.error(err)
+    }
   }
 
   // ── Guard ──────────────────────────────────────────────────────────────────
@@ -344,9 +378,57 @@ export default function ReportPage() {
         <div className="p-8 md:p-12 bg-gray-50">
           <h2 className="text-lg font-bold text-indigo-900 mb-6 flex items-center gap-2">
             <span className="bg-indigo-100 text-indigo-700 w-6 h-6 flex items-center justify-center rounded-full text-xs">6</span>
-            Visualizations & Charts
+            Data Quality & Visualizations
           </h2>
+          
+          {/* Data Quality Assessment Header */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm text-center">
+              <p className="text-xs text-gray-500 uppercase font-mono mb-1">Overall Grade</p>
+              <p className={`text-2xl font-bold ${quality.grade === 'Excellent' ? 'text-emerald-600' : quality.grade === 'Good' ? 'text-indigo-600' : quality.grade === 'Fair' ? 'text-amber-500' : 'text-rose-500'}`}>
+                {quality.grade}
+              </p>
+            </div>
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm text-center">
+              <p className="text-xs text-gray-500 uppercase font-mono mb-1">Quality Score</p>
+              <p className="text-2xl font-bold text-gray-800">{quality.score}%</p>
+            </div>
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm text-center">
+              <p className="text-xs text-gray-500 uppercase font-mono mb-1">Missing %</p>
+              <p className="text-2xl font-bold text-gray-800">{metrics.missingValueRate.toFixed(1)}%</p>
+            </div>
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm text-center">
+              <p className="text-xs text-gray-500 uppercase font-mono mb-1">Duplicate %</p>
+              <p className="text-2xl font-bold text-gray-800">{metrics.duplicateRate.toFixed(1)}%</p>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 ml-8">
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+              <h3 className="text-sm font-semibold text-gray-700 mb-6 text-center">Data Quality Breakdown</h3>
+              <ResponsiveContainer width="100%" height={260} className="recharts-responsive-container">
+                <BarChart data={dqChartData} layout="vertical" margin={{ left: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
+                  <XAxis type="number" domain={[0, 100]} tick={{ fill: '#6B7280', fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="name" tick={{ fill: '#6B7280', fontSize: 11 }} axisLine={false} tickLine={false} width={80} />
+                  <RechartsTooltip cursor={{ fill: '#f9fafb' }} />
+                  <Bar dataKey="value" fill="#10B981" radius={[0,4,4,0]} barSize={20} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+              <h3 className="text-sm font-semibold text-gray-700 mb-6 text-center">Category Distribution: Top {cat1}</h3>
+              <ResponsiveContainer width="100%" height={260} className="recharts-responsive-container">
+                <PieChart>
+                  <Pie data={catDistributionData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={90}>
+                    {catDistributionData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                  </Pie>
+                  <RechartsTooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
             <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
               <h3 className="text-sm font-semibold text-gray-700 mb-6 text-center">{num0} by {cat0}</h3>
               <ResponsiveContainer width="100%" height={260} className="recharts-responsive-container">
@@ -355,7 +437,7 @@ export default function ReportPage() {
                   <XAxis dataKey="name" tick={{ fill: '#6B7280', fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fill: '#6B7280', fontSize: 11 }} axisLine={false} tickLine={false} width={80} />
                   <RechartsTooltip cursor={{ fill: '#f9fafb' }} />
-                  <Bar dataKey="value" fill="#6366F1" radius={[4,4,0,0]} />
+                  <Bar dataKey="value" fill="#6366F1" radius={[4,4,0,0]} barSize={30} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -378,6 +460,69 @@ export default function ReportPage() {
         <div className="px-8 py-6 bg-white border-t border-gray-100 flex justify-between items-center print:border-t-0">
           <p className="text-xs text-gray-400">Generated by DataPulse Analytics</p>
           <p className="text-xs text-gray-400">Confidential</p>
+        </div>
+      </div>
+
+      {/* Share Management */}
+      <div className="mt-8 bg-white border border-gray-200 rounded-xl overflow-hidden print:hidden">
+        <div className="bg-gray-50 border-b border-gray-200 p-5 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <Link2 size={18} className="text-indigo-600" /> Share Links
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">Manage active and revoked share links for this report.</p>
+          </div>
+        </div>
+        <div className="p-0">
+          {shareData?.reports?.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-gray-50 text-gray-500 font-medium border-b border-gray-100">
+                  <tr>
+                    <th className="px-6 py-3">Token</th>
+                    <th className="px-6 py-3">Status</th>
+                    <th className="px-6 py-3">Created</th>
+                    <th className="px-6 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {shareData.reports.map((r: any) => (
+                    <tr key={r.token} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 font-mono text-xs text-gray-600">
+                        {r.token.substring(0, 8)}...
+                      </td>
+                      <td className="px-6 py-4">
+                        {r.revokedAt ? (
+                          <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/10">Revoked</span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20">Active</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-gray-500">
+                        {new Date(r.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 text-right space-x-4">
+                        {!r.revokedAt && (
+                          <>
+                            <button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/shared/${r.token}`)} className="text-indigo-600 hover:text-indigo-900 font-medium">
+                              Copy Link
+                            </button>
+                            <button onClick={() => handleRevoke(r.token)} className="text-rose-600 hover:text-rose-900 font-medium">
+                              Revoke
+                            </button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="p-8 text-center text-gray-500">
+              No share links generated yet.
+            </div>
+          )}
         </div>
       </div>
 
