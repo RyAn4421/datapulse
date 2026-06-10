@@ -4,10 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { connectDB } from '@/lib/mongodb';
 import { Dataset } from '@/lib/models/Dataset';
 import { Row } from '@/lib/models/Row';
-import path from 'path';
-import fs from 'fs';
-
-const ALLOWED_SAMPLES = ['sales', 'marketing', 'hr', 'finance', 'projects'];
+import { SAMPLE_DATASETS } from '@/lib/sample-datasets';
 
 export async function POST(
   req: NextRequest,
@@ -19,18 +16,10 @@ export async function POST(
   }
 
   const { name } = params;
-  if (!ALLOWED_SAMPLES.includes(name)) {
-    return NextResponse.json({ error: 'Unknown sample dataset' }, { status: 404 });
-  }
+  const sampleData = SAMPLE_DATASETS[name];
 
-  // Read sample JSON from public/sample-datasets/
-  const filePath = path.join(process.cwd(), 'public', 'sample-datasets', `${name}.json`);
-  let sampleData: any;
-  try {
-    const raw = fs.readFileSync(filePath, 'utf-8');
-    sampleData = JSON.parse(raw);
-  } catch {
-    return NextResponse.json({ error: 'Sample data not found' }, { status: 500 });
+  if (!sampleData) {
+    return NextResponse.json({ error: 'Unknown sample dataset' }, { status: 404 });
   }
 
   await connectDB();
