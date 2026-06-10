@@ -44,7 +44,7 @@ const SharedReportSchema = new Schema<ISharedReport>({
     overview: { type: String, required: true },
     topCategory: { type: String, required: true },
     risk: { type: String, required: true },
-    opportunities: { type: String, required: true },
+    opportunities: { type: String, required: false, default: '' },
     recommendation: { type: String, required: true },
   },
   

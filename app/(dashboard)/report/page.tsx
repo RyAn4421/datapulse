@@ -157,7 +157,10 @@ export default function ReportPage() {
       })
 
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to generate link')
+      if (!res.ok) {
+        // Surface the human-readable message from the API (e.g. summary_stale 409)
+        throw new Error(data.message || data.error || 'Failed to generate link')
+      }
       
       const fullUrl = `${window.location.origin}${data.url}`
       setShareUrl(fullUrl)
@@ -167,6 +170,7 @@ export default function ReportPage() {
       setShareLoading(false)
     }
   }
+
 
   const copyLink = () => {
     if (shareUrl) navigator.clipboard.writeText(shareUrl)
